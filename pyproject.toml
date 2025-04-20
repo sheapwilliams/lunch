@@ -9,12 +9,15 @@ dependencies = [
     "Flask==3.1.0",
     "Flask-SQLAlchemy==3.1.1",
     "Flask-Login==0.6.3",
+    "gunicorn",
     "Werkzeug==3.1",
-    "python-dotenv==1.0.1"
+    "python-dotenv==1.0.1",
+    "pytz",
+    "sqlalchemy",
 ]
 requires-python = ">=3.13"
 
 [dependency-groups]
 dev = [
-    "ruff>=0.11.6",
+    "ruff",
 ]
