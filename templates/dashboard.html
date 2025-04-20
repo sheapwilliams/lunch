@@ -3,11 +3,11 @@
 {% block content %}
 <script>
     console.log('Dashboard template rendering');
-    console.log('Week dates:', {{ week_dates|tojson|safe }});
-    console.log('Lunch options:', {{ lunch_options|tojson|safe }});
-    console.log('Orders:', {{ orders|tojson|safe }});
-    console.log('Cart:', {{ cart|tojson|safe }});
-    console.log('Ordering closed:', {{ ordering_closed|tojson|safe }});
+    console.log('Week dates:', JSON.parse('{{ week_dates|tojson|safe }}'));
+    console.log('Lunch options:', JSON.parse('{{ lunch_options|tojson|safe }}'));
+    console.log('Orders:', JSON.parse('{{ orders|tojson|safe }}'));
+    console.log('Cart:', JSON.parse('{{ cart|tojson|safe }}'));
+    console.log('Ordering closed:', JSON.parse('{{ ordering_closed|tojson|safe }}'));
     console.log('Location:', {
         name: '{{ location.name }}',
         display_name: '{{ location.display_name }}',
