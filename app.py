@@ -293,6 +293,9 @@ def add_to_cart():
         cart = session.get("cart", {})
         logger.debug(f"Current cart: {cart}")
 
+        # Track removed items for the flash message
+        removed_items = []
+
         # Process all selections in the form
         for key, meal_type in request.form.items():
             if key.startswith("meal_type_"):
@@ -313,6 +316,12 @@ def add_to_cart():
                         del cart[date_str]
                     continue
 
+                # Check if ordering is closed for this date
+                date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                if is_ordering_closed(date):
+                    removed_items.append(date_str)
+                    continue
+
                 # Add valid meal selection to cart
                 cart[date_str] = meal_type
                 logger.debug(f"Added to cart - date: {date_str}, meal: {meal_type}")
@@ -323,6 +332,10 @@ def add_to_cart():
         session.modified = True
         logger.debug(f"Updated cart: {cart}")
         logger.debug(f"Session after update: {session}")
+
+        # Add flash message if any items were removed
+        if removed_items:
+            flash(f"Some items were removed because ordering was closed: {', '.join(removed_items)}", "warning")
 
         flash("Items added to cart!")
         return redirect(url_for("cart"))
