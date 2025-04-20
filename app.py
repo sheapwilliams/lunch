@@ -357,5 +357,3 @@ if __name__ == "__main__":
             db.session.add(default_user)
             db.session.commit()
             print("Created default user: admin/admin")
-
-        app.run(debug=True)
