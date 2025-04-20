@@ -23,7 +23,6 @@ from datetime import datetime, timedelta
 import os
 import json
 import logging
-import config
 from config import get_timezone, get_cutoff_time, LOCATION
 
 # Configure logging
@@ -48,7 +47,7 @@ def datetimeformat(value):
     try:
         date = datetime.strptime(value, "%Y-%m-%d")
         return date.strftime("%A, %B %d")
-    except:
+    except ValueError:
         return value
 
 
