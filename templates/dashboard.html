@@ -111,7 +111,7 @@
                                                     {% for meal in lunch_options[date_str].meals %}
                                                         {% if meal.type != 'N' %}
                                                             <div class="mb-1">
-                                                                <strong>{{ meal.name }}:</strong> {{ meal.desc }}
+                                                                <strong>${{ "%.2f"|format(meal.price) }} - {{ meal.name }}:</strong> {{ meal.desc }}
                                                             </div>
                                                         {% endif %}
                                                     {% endfor %}
@@ -119,7 +119,7 @@
                                                 <select name="meal_type_{{ date_str }}" class="form-select">
                                                     <option value="">Select an option</option>
                                                     {% for meal in lunch_options[date_str].meals %}
-                                                        <option value="{{ meal.type }}">{{ meal.name }}</option>
+                                                        <option value="{{ meal.type }}">${{ "%.2f"|format(meal.price) }} - {{ meal.name }}</option>
                                                     {% endfor %}
                                                 </select>
                                             {% endif %}

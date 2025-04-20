@@ -17,8 +17,9 @@ from flask_login import (
     logout_user,
     current_user,
 )
+from flask_session import Session
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import json
 import logging
@@ -29,12 +30,31 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.urandom(24)
+app.config["SECRET_KEY"] = os.urandom(24).hex()
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///lunch.db"
+app.config["SESSION_TYPE"] = "filesystem"
+app.config["SESSION_FILE_DIR"] = os.path.join(os.getcwd(), "flask_session")
+app.config["SESSION_PERMANENT"] = True
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=1)
+app.config["SESSION_COOKIE_SECURE"] = False  # Set to True in production
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
 db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
+Session(app)
+
+
+# Initialize session for new users
+@app.before_request
+def before_request():
+    if current_user.is_authenticated:
+        if "cart" not in session:
+            session["cart"] = {}
+        session.permanent = True
+        session.modified = True
 
 
 # Helper function to check if ordering is closed for a date
@@ -232,25 +252,35 @@ def logout():
 @app.route("/add_to_cart", methods=["POST"])
 @login_required
 def add_to_cart():
-    # Get the cart from session or initialize it
-    cart = session.get("cart", {})
+    try:
+        logger.debug(f"Current user: {current_user.username}")
+        logger.debug(f"Session before update: {session}")
 
-    logger.debug(f"Current cart before adding items: {cart}")
-    logger.debug(f"Form data: {request.form}")
+        # Get the cart from session or initialize it
+        cart = session.get("cart", {})
+        logger.debug(f"Current cart: {cart}")
 
-    # Process all selections in the form
-    for key, meal_type in request.form.items():
-        if key.startswith("meal_type_") and meal_type:  # Only add non-empty selections
-            date_str = key.replace("meal_type_", "")
-            cart[date_str] = meal_type
-            logger.debug(f"Added to cart - date: {date_str}, meal: {meal_type}")
+        # Process all selections in the form
+        for key, meal_type in request.form.items():
+            if (
+                key.startswith("meal_type_") and meal_type
+            ):  # Only add non-empty selections
+                date_str = key.replace("meal_type_", "")
+                cart[date_str] = meal_type
+                logger.debug(f"Added to cart - date: {date_str}, meal: {meal_type}")
 
-    # Save the cart to session
-    session["cart"] = cart
-    logger.debug(f"Updated cart: {cart}")
+        # Save the cart to session
+        session["cart"] = cart
+        session.modified = True  # Explicitly mark session as modified
+        logger.debug(f"Updated cart: {cart}")
+        logger.debug(f"Session after update: {session}")
 
-    flash("Items added to cart!")
-    return redirect(url_for("cart"))
+        flash("Items added to cart!")
+        return redirect(url_for("dashboard", _anchor="cart"))
+    except Exception as e:
+        logger.error(f"Error in add_to_cart: {e}")
+        flash("Error adding items to cart. Please try again.")
+        return redirect(url_for("dashboard"))
 
 
 @app.route("/submit_cart", methods=["POST"])
@@ -305,9 +335,13 @@ def remove_from_cart():
 @app.route("/clear_cart", methods=["POST"])
 @login_required
 def clear_cart():
-    # Clear the cart from session
-    session.pop("cart", None)
-    return jsonify({"success": True})
+    try:
+        session.pop("cart", None)
+        session["cart"] = {}  # Reinitialize empty cart
+        return jsonify({"success": True})
+    except Exception as e:
+        logger.error(f"Error clearing cart: {e}")
+        return jsonify({"success": False}), 500
 
 
 @app.route("/delete_order", methods=["POST"])
@@ -337,11 +371,13 @@ def delete_order():
     return redirect(url_for("dashboard"))
 
 
-@app.route('/cart')
+@app.route("/cart")
 @login_required
 def cart():
     lunch_options = load_lunch_options()
-    return render_template('cart.html', cart=session.get('cart', {}), lunch_options_json=lunch_options)
+    return render_template(
+        "cart.html", cart=session.get("cart", {}), lunch_options_json=lunch_options
+    )
 
 
 if __name__ == "__main__":

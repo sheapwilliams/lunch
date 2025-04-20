@@ -139,6 +139,7 @@
             const tbody = document.getElementById('cart-items');
             const cartButtons = document.getElementById('cart-buttons');
             const emptyCartMessage = document.getElementById('empty-cart-message');
+            const cartTotal = document.getElementById('cart-total');
             
             if (!tbody) return;
             
@@ -147,6 +148,7 @@
             console.log('Lunch options:', lunchOptions);
             
             const hasItems = Object.keys(cart).length > 0;
+            let total = 0;
             
             // Show/hide buttons and message based on cart contents
             if (cartButtons) {
@@ -167,12 +169,14 @@
                         continue;
                     }
                     
+                    total += meal.price;
+                    
                     tr.innerHTML = `
                         <td>${date}</td>
                         <td>${getWeekdayFromDateString(date)}</td>
                         <td>${lunchOptions[date].restaurant}</td>
                         <td>${meal.name}</td>
-                        <td>${meal.desc}</td>
+                        <td class="text-end">$${meal.price.toFixed(2)}</td>
                         <td>
                             <button type="button" class="btn btn-danger btn-sm" onclick="removeFromCart('${date}')">
                                 Remove
@@ -183,6 +187,11 @@
                 } catch (error) {
                     console.error('Error displaying cart item:', error);
                 }
+            }
+            
+            // Update total
+            if (cartTotal) {
+                cartTotal.innerHTML = `<strong>$${total.toFixed(2)}</strong>`;
             }
             
             updateCartCount();

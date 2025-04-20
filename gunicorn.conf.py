@@ -5,4 +5,4 @@ threads = 2
 timeout = 120
 accesslog = "-"
 errorlog = "-"
-loglevel = "info" 
+loglevel = "info"
