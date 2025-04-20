@@ -337,7 +337,10 @@ def add_to_cart():
         if removed_items:
             flash(f"Some items were removed because ordering was closed: {', '.join(removed_items)}", "warning")
 
-        flash("Items added to cart!")
+        # Only show success message if there are items in the cart
+        if cart:
+            flash("Items added to cart!")
+
         return redirect(url_for("cart"))
     except Exception as e:
         logger.error(f"Error in add_to_cart: {e}")
