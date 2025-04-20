@@ -250,7 +250,7 @@ def add_to_cart():
     logger.debug(f"Updated cart: {cart}")
 
     flash("Items added to cart!")
-    return redirect(url_for("dashboard") + "?tab=cart")
+    return redirect(url_for("cart"))
 
 
 @app.route("/submit_cart", methods=["POST"])
@@ -335,6 +335,13 @@ def delete_order():
         db.session.rollback()
 
     return redirect(url_for("dashboard"))
+
+
+@app.route('/cart')
+@login_required
+def cart():
+    lunch_options = load_lunch_options()
+    return render_template('cart.html', cart=session.get('cart', {}), lunch_options_json=lunch_options)
 
 
 if __name__ == "__main__":

@@ -24,7 +24,7 @@
         
         <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link {% if request.args.get('tab') != 'create' and request.args.get('tab') != 'cart' %}active{% endif %}" 
+                <button class="nav-link {% if request.args.get('tab') != 'create' %}active{% endif %}" 
                         id="view-tab" data-bs-toggle="tab" data-bs-target="#view" type="button" role="tab">
                     View Orders
                 </button>
@@ -35,17 +35,11 @@
                     Create New Order
                 </button>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link {% if request.args.get('tab') == 'cart' %}active{% endif %}" 
-                        id="cart-tab" data-bs-toggle="tab" data-bs-target="#cart" type="button" role="tab">
-                    Cart <span id="cart-count" class="badge bg-primary">0</span>
-                </button>
-            </li>
         </ul>
         
         <div class="tab-content mt-3" id="dashboardTabsContent">
             <!-- View Orders Tab -->
-            <div class="tab-pane fade {% if request.args.get('tab') != 'create' and request.args.get('tab') != 'cart' %}show active{% endif %}" 
+            <div class="tab-pane fade {% if request.args.get('tab') != 'create' %}show active{% endif %}" 
                  id="view" role="tabpanel">
                 <div class="table-responsive">
                     <table class="table table-striped">
@@ -136,36 +130,6 @@
                         </table>
                     </div>
                     <button type="submit" class="btn btn-primary">Add to Cart</button>
-                </form>
-            </div>
-            
-            <!-- Cart Tab -->
-            <div class="tab-pane fade {% if request.args.get('tab') == 'cart' %}show active{% endif %}" 
-                 id="cart" role="tabpanel">
-                <form action="{{ url_for('submit_cart') }}" method="post">
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Day</th>
-                                    <th>Restaurant</th>
-                                    <th>Selection</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="cart-items">
-                                <!-- Cart items will be populated by JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                    <div id="cart-buttons" class="mt-3" style="display: none;">
-                        <button type="submit" class="btn btn-success">Submit Orders</button>
-                        <button type="button" class="btn btn-danger ms-2" onclick="clearCart()">Clear Cart</button>
-                    </div>
-                    <div id="empty-cart-message" class="alert alert-info">
-                        Your cart is empty. Add some items from the "Create New Order" tab.
-                    </div>
                 </form>
             </div>
         </div>
