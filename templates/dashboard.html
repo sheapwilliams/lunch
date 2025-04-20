@@ -52,12 +52,12 @@
                         <tbody>
                             {% for date in week_dates %}
                             <tr>
-                                <td>{{ date.strftime('%A, %B %d') }}</td>
+                                <td>{{ date }}</td>
+                                <td>{{ date|datetimeformat }}</td>
                                 <td>
-                                    {% if date.strftime('%Y-%m-%d') in orders %}
-                                        {% set date_str = date.strftime('%Y-%m-%d') %}
-                                        {% set meal_type = orders[date_str] %}
-                                        {% for meal in lunch_options[date_str].meals %}
+                                    {% if date in orders %}
+                                        {% set meal_type = orders[date] %}
+                                        {% for meal in lunch_options[date].meals %}
                                             {% if meal.type == meal_type %}
                                                 {{ meal.name }}
                                             {% endif %}
@@ -89,18 +89,17 @@
                             </thead>
                             <tbody>
                                 {% for date in week_dates %}
-                                    {% set date_str = date.strftime('%Y-%m-%d') %}
-                                    <tr {% if date_str in orders and orders[date_str] != 'N' %}class="table-secondary"{% endif %}>
-                                        <td>{{ date.strftime('%Y-%m-%d') }}</td>
-                                        <td>{{ date.strftime('%A') }}</td>
-                                        <td>{{ lunch_options[date_str].restaurant }}</td>
+                                    <tr {% if date in orders and orders[date] != 'N' %}class="table-secondary"{% endif %}>
+                                        <td>{{ date }}</td>
+                                        <td>{{ date|datetimeformat }}</td>
+                                        <td>{{ lunch_options[date].restaurant }}</td>
                                         <td>
-                                            {% if date_str in orders and orders[date_str] != 'N' %}
+                                            {% if date in orders and orders[date] != 'N' %}
                                                 <div class="text-muted">
                                                     <i class="bi bi-check-circle-fill text-success"></i> Order already placed
                                                     <select class="form-select" disabled>
-                                                        {% for meal in lunch_options[date_str].meals %}
-                                                            {% if meal.type == orders[date_str] %}
+                                                        {% for meal in lunch_options[date].meals %}
+                                                            {% if meal.type == orders[date] %}
                                                                 <option value="{{ meal.type }}" selected>{{ meal.name }}</option>
                                                             {% endif %}
                                                         {% endfor %}
@@ -108,7 +107,7 @@
                                                 </div>
                                             {% else %}
                                                 <div class="mb-2">
-                                                    {% for meal in lunch_options[date_str].meals %}
+                                                    {% for meal in lunch_options[date].meals %}
                                                         {% if meal.type != 'N' %}
                                                             <div class="mb-1">
                                                                 <strong>${{ "%.2f"|format(meal.price) }} - {{ meal.name }}:</strong> {{ meal.desc }}
@@ -116,9 +115,9 @@
                                                         {% endif %}
                                                     {% endfor %}
                                                 </div>
-                                                <select name="meal_type_{{ date_str }}" class="form-select">
+                                                <select name="meal_type_{{ date }}" class="form-select">
                                                     <option value="">Select an option</option>
-                                                    {% for meal in lunch_options[date_str].meals %}
+                                                    {% for meal in lunch_options[date].meals %}
                                                         <option value="{{ meal.type }}">${{ "%.2f"|format(meal.price) }} - {{ meal.name }}</option>
                                                     {% endfor %}
                                                 </select>

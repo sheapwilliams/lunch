@@ -7,6 +7,7 @@ LOCATION = {
     "timezone": "America/Denver",  # Uses pytz timezone format
     "ordering_cutoff": time(hour=9, minute=30),  # 9:30 AM local time
     "display_name": "Aspen, CO",
+    "icon": "cppnow-logo.png",  # Custom logo image
 }
 
 

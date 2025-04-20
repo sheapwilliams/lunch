@@ -23,6 +23,7 @@ from datetime import datetime, timedelta
 import os
 import json
 import logging
+import config
 from config import get_timezone, get_cutoff_time, LOCATION
 
 # Configure logging
@@ -39,6 +40,17 @@ app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=1)
 app.config["SESSION_COOKIE_SECURE"] = False  # Set to True in production
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+
+# Add datetimeformat filter
+@app.template_filter("datetimeformat")
+def datetimeformat(value):
+    try:
+        date = datetime.strptime(value, "%Y-%m-%d")
+        return date.strftime("%A, %B %d")
+    except:
+        return value
+
 
 db = SQLAlchemy(app)
 login_manager = LoginManager()
@@ -83,9 +95,8 @@ def is_ordering_closed(date):
 # Load lunch options from JSON file
 def load_lunch_options():
     with open("data/lunch_options.json", "r") as f:
-        data = json.load(f)["daily_options"]
-        logging.debug(f"Raw lunch options from JSON: {data}")
-        return data
+        data = json.load(f)
+        return data["daily_options"]
 
 
 # Database Models
@@ -113,7 +124,7 @@ def load_user(user_id):
 def index():
     if current_user.is_authenticated:
         return redirect(url_for("dashboard"))
-    return render_template("index.html")
+    return render_template("index.html", location=LOCATION)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -127,7 +138,7 @@ def login():
             login_user(user)
             return redirect(url_for("dashboard"))
         flash("Invalid username or password")
-    return render_template("login.html")
+    return render_template("login.html", location=LOCATION)
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -145,54 +156,47 @@ def register():
         db.session.commit()
 
         return redirect(url_for("login"))
-    return render_template("register.html")
+    return render_template("register.html", location=LOCATION)
 
 
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    logger.debug("Dashboard route called")
-    logger.debug(f"Current user: {current_user}")
-
     # Load lunch options first
     lunch_options = load_lunch_options()
-    logger.debug(f"Loaded lunch options: {lunch_options}")
 
-    # Get the dates from lunch options
-    week_dates = [
-        datetime.strptime(date_str, "%Y-%m-%d").date()
-        for date_str in lunch_options.keys()
-    ]
-    week_dates.sort()  # Sort dates in ascending order
-    logger.debug(f"Week dates: {week_dates}")
+    # Get dates from lunch options
+    week_dates = sorted(lunch_options.keys())
 
     # Get user's orders
-    orders = {}
-    for order in Order.query.filter_by(user_id=current_user.id).all():
-        orders[order.date.strftime("%Y-%m-%d")] = order.meal_type
-    logger.debug(f"User orders: {orders}")
+    orders = Order.query.filter_by(user_id=current_user.id).all()
+    # Convert orders to a serializable format
+    orders_dict = {order.date.strftime("%Y-%m-%d"): order.meal_type for order in orders}
 
     # Get cart from session
     cart = session.get("cart", {})
-    logger.debug(f"Session cart: {cart}")
 
     # Check which dates have ordering closed
     ordering_closed = {}
-    for date in week_dates:
-        ordering_closed[date.strftime("%Y-%m-%d")] = is_ordering_closed(date)
-    logger.debug(f"Ordering closed status: {ordering_closed}")
+    for date_str in week_dates:
+        date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        ordering_closed[date_str] = is_ordering_closed(date)
 
-    # Debug template variables
+    # Debug logging
+    app.logger.debug(f"Week dates: {week_dates}")
+    app.logger.debug(f"Lunch options: {lunch_options}")
+    app.logger.debug(f"Orders: {orders_dict}")
+    app.logger.debug(f"Cart: {cart}")
+    app.logger.debug(f"Ordering closed: {ordering_closed}")
+
     template_vars = {
         "week_dates": week_dates,
         "lunch_options": lunch_options,
-        "orders": orders,
+        "orders": orders_dict,
         "cart": cart,
         "ordering_closed": ordering_closed,
-        "lunch_options_json": lunch_options,
         "location": LOCATION,
     }
-    logger.debug(f"Template variables: {template_vars}")
 
     return render_template("dashboard.html", **template_vars)
 
@@ -400,7 +404,10 @@ def delete_order():
 def cart():
     lunch_options = load_lunch_options()
     return render_template(
-        "cart.html", cart=session.get("cart", {}), lunch_options_json=lunch_options
+        "cart.html",
+        cart=session.get("cart", {}),
+        lunch_options_json=lunch_options,
+        location=LOCATION,
     )
 
 
