@@ -100,9 +100,11 @@
             // Check if we should activate a specific tab
             const urlParams = new URLSearchParams(window.location.search);
             const tab = urlParams.get('tab');
+            const hash = window.location.hash;
             console.log('URL params:', urlParams.toString());
-            console.log('Tab to activate:', tab);
+            console.log('Hash:', hash);
             
+            // First try to activate tab from URL parameter
             if (tab) {
                 const tabElement = document.getElementById(`${tab}-tab`);
                 console.log('Tab element:', tabElement);
@@ -110,6 +112,14 @@
                     console.log('Activating tab:', tab);
                     const bsTab = new bootstrap.Tab(tabElement);
                     bsTab.show();
+                }
+            }
+            
+            // Then try to scroll to anchor if present
+            if (hash) {
+                const element = document.querySelector(hash);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
                 }
             }
         });

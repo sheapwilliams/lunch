@@ -50,9 +50,14 @@ Session(app)
 # Initialize session for new users
 @app.before_request
 def before_request():
+    # Initialize session for new users and ensure cart is user-specific
     if current_user.is_authenticated:
         if "cart" not in session:
             session["cart"] = {}
+        # Ensure the cart belongs to the current user
+        if "user_id" not in session or session["user_id"] != current_user.id:
+            session["cart"] = {}
+            session["user_id"] = current_user.id
         session.permanent = True
         session.modified = True
 
@@ -245,6 +250,8 @@ def order():
 @app.route("/logout")
 @login_required
 def logout():
+    # Clear all session data
+    session.clear()
     logout_user()
     return redirect(url_for("index"))
 
@@ -255,6 +262,7 @@ def add_to_cart():
     try:
         logger.debug(f"Current user: {current_user.username}")
         logger.debug(f"Session before update: {session}")
+        logger.debug(f"Form data received: {request.form}")
 
         # Get the cart from session or initialize it
         cart = session.get("cart", {})
@@ -262,21 +270,37 @@ def add_to_cart():
 
         # Process all selections in the form
         for key, meal_type in request.form.items():
-            if (
-                key.startswith("meal_type_") and meal_type
-            ):  # Only add non-empty selections
+            if key.startswith("meal_type_"):
                 date_str = key.replace("meal_type_", "")
+                logger.debug(
+                    f"Processing selection - date: {date_str}, meal_type: {meal_type}"
+                )
+
+                # Skip empty selections
+                if not meal_type or meal_type.strip() == "":
+                    logger.debug(f"Skipping empty selection for date: {date_str}")
+                    continue
+
+                # Handle None selection
+                if meal_type == "N":
+                    logger.debug(f"Handling None selection for date: {date_str}")
+                    if date_str in cart:
+                        del cart[date_str]
+                    continue
+
+                # Add valid meal selection to cart
                 cart[date_str] = meal_type
                 logger.debug(f"Added to cart - date: {date_str}, meal: {meal_type}")
 
-        # Save the cart to session
+        # Save the cart to session without clearing other session data
         session["cart"] = cart
-        session.modified = True  # Explicitly mark session as modified
+        session["user_id"] = current_user.id
+        session.modified = True
         logger.debug(f"Updated cart: {cart}")
         logger.debug(f"Session after update: {session}")
 
         flash("Items added to cart!")
-        return redirect(url_for("dashboard", _anchor="cart"))
+        return redirect(url_for("cart"))
     except Exception as e:
         logger.error(f"Error in add_to_cart: {e}")
         flash("Error adding items to cart. Please try again.")

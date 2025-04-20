@@ -76,7 +76,7 @@
             <!-- Create New Order Tab -->
             <div class="tab-pane fade {% if request.args.get('tab') == 'create' %}show active{% endif %}" 
                  id="create" role="tabpanel">
-                <form action="{{ url_for('add_to_cart') }}" method="post">
+                <form action="{{ url_for('add_to_cart', tab='create') }}" method="post">
                     <div class="table-responsive">
                         <table class="table">
                             <thead>
