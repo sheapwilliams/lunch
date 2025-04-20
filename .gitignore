@@ -1,0 +1,19 @@
+# Database files
+*.db
+instance/*.db
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo 
