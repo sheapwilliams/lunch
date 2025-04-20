@@ -348,12 +348,3 @@ if __name__ == "__main__":
     with app.app_context():
         # Create all database tables
         db.create_all()
-
-        # Check if any users exist, if not create a default user
-        if User.query.count() == 0:
-            default_user = User(
-                username="admin", password_hash=generate_password_hash("admin")
-            )
-            db.session.add(default_user)
-            db.session.commit()
-            print("Created default user: admin/admin")
