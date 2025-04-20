@@ -24,6 +24,7 @@ import os
 import json
 import logging
 from config import get_timezone, get_cutoff_time, LOCATION
+import pytz
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -75,19 +76,40 @@ def before_request():
 
 # Helper function to check if ordering is closed for a date
 def is_ordering_closed(date):
-    # Get current time in configured timezone
-    local_tz = get_timezone()
-    now = datetime.now(local_tz)
+    # Get current time in UTC
+    now_utc = datetime.utcnow().replace(tzinfo=pytz.UTC)
 
-    # Convert the input date to local timezone for comparison
-    date_in_local = local_tz.localize(datetime.combine(date, datetime.min.time()))
+    # Get the cutoff time in configured timezone and convert to UTC
+    tz = get_timezone()
+    cutoff_local = get_cutoff_time()
+    # Create a datetime with the input date and cutoff time in local timezone
+    cutoff_local_dt = tz.localize(datetime.combine(date, cutoff_local))
+    # Convert cutoff time to UTC
+    cutoff_utc = cutoff_local_dt.astimezone(pytz.UTC)
 
-    # Get the cutoff time
-    cutoff = get_cutoff_time()
+    # Convert the input date to UTC for comparison
+    date_local = tz.localize(datetime.combine(date, datetime.min.time()))
+    date_utc = date_local.astimezone(pytz.UTC)
 
-    # If the date is today and it's past the cutoff time
-    if date_in_local.date() == now.date() and now.time() >= cutoff:
+    # Convert all to Unix timestamps
+    now_ts = now_utc.timestamp()
+    cutoff_ts = cutoff_utc.timestamp()
+    date_ts = date_utc.timestamp()
+
+    # Debug logging
+    app.logger.debug(f"Checking ordering status for date: {date}")
+    app.logger.debug(f"Current time (UTC): {now_utc}")
+    app.logger.debug(f"Cutoff time (UTC): {cutoff_utc}")
+    app.logger.debug(f"Date in UTC: {date_utc}")
+    app.logger.debug(
+        f"Unix timestamps - now: {now_ts}, cutoff: {cutoff_ts}, date: {date_ts}"
+    )
+
+    # If we're past the cutoff time for this date
+    if now_ts >= cutoff_ts:
+        app.logger.debug("Ordering is closed for this date")
         return True
+    app.logger.debug("Ordering is open for this date")
     return False
 
 

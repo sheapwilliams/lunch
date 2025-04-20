@@ -89,7 +89,7 @@
                             </thead>
                             <tbody>
                                 {% for date in week_dates %}
-                                    <tr {% if date in orders and orders[date] != 'N' %}class="table-secondary"{% endif %}>
+                                    <tr {% if date in orders and orders[date] != 'N' or ordering_closed[date] %}class="table-secondary"{% endif %}>
                                         <td>{{ date }}</td>
                                         <td>{{ date|datetimeformat }}</td>
                                         <td>{{ lunch_options[date].restaurant }}</td>
@@ -104,6 +104,10 @@
                                                             {% endif %}
                                                         {% endfor %}
                                                     </select>
+                                                </div>
+                                            {% elif ordering_closed[date] %}
+                                                <div class="text-muted">
+                                                    <i class="bi bi-clock-history"></i> Ordering closed for this date
                                                 </div>
                                             {% else %}
                                                 <div class="mb-2">
