@@ -132,7 +132,9 @@ class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     date = db.Column(db.Date, nullable=False)
-    meal_name = db.Column(db.String(100), nullable=False)  # Changed from meal_type to meal_name
+    meal_name = db.Column(
+        db.String(100), nullable=False
+    )  # Changed from meal_type to meal_name
 
 
 @login_manager.user_loader
@@ -192,7 +194,10 @@ def dashboard():
     # Get user's orders
     orders = Order.query.filter_by(user_id=current_user.id).all()
     # Convert orders to a serializable format
-    orders_dict = {order.date.strftime("%Y-%m-%d"): order.meal_name for order in orders}
+    orders_dict = {}
+    for order in orders:
+        date_str = order.date.strftime("%Y-%m-%d")
+        orders_dict[date_str] = order.meal_name
 
     # Get cart from session
     cart = session.get("cart", {})
@@ -227,12 +232,15 @@ def dashboard():
 def order():
     logger.debug(f"Received order request: {request.form}")
 
+    # Load lunch options to get meal names
+    lunch_options = load_lunch_options()
+
     # Get list of dates that already have orders
     ordered_dates = request.form.getlist("ordered_dates")
     logger.debug(f"Ordered dates: {ordered_dates}")
 
     # Process all orders in the form
-    for key, meal_name in request.form.items():
+    for key, meal_type in request.form.items():
         if key.startswith("meal_type_"):
             date_str = key.replace("meal_type_", "")
 
@@ -242,6 +250,14 @@ def order():
                 continue
 
             date = datetime.strptime(date_str, "%Y-%m-%d").date()
+
+            # Find the meal name for this meal type
+            meal_name = "None"
+            if date_str in lunch_options:
+                for meal in lunch_options[date_str]["meals"]:
+                    if meal["type"] == meal_type:
+                        meal_name = meal["name"]
+                        break
 
             logger.debug(f"Processing order for date: {date}, meal_name: {meal_name}")
 
@@ -289,6 +305,9 @@ def add_to_cart():
         logger.debug(f"Session before update: {session}")
         logger.debug(f"Form data received: {request.form}")
 
+        # Load lunch options to get meal names
+        lunch_options = load_lunch_options()
+
         # Get the cart from session or initialize it
         cart = session.get("cart", {})
         logger.debug(f"Current cart: {cart}")
@@ -297,20 +316,20 @@ def add_to_cart():
         removed_items = []
 
         # Process all selections in the form
-        for key, meal_name in request.form.items():
+        for key, meal_type in request.form.items():
             if key.startswith("meal_type_"):
                 date_str = key.replace("meal_type_", "")
                 logger.debug(
-                    f"Processing selection - date: {date_str}, meal_name: {meal_name}"
+                    f"Processing selection - date: {date_str}, meal_type: {meal_type}"
                 )
 
                 # Skip empty selections
-                if not meal_name or meal_name.strip() == "":
+                if not meal_type or meal_type.strip() == "":
                     logger.debug(f"Skipping empty selection for date: {date_str}")
                     continue
 
                 # Handle None selection
-                if meal_name == "N":
+                if meal_type == "N":
                     logger.debug(f"Handling None selection for date: {date_str}")
                     if date_str in cart:
                         del cart[date_str]
@@ -321,6 +340,14 @@ def add_to_cart():
                 if is_ordering_closed(date):
                     removed_items.append(date_str)
                     continue
+
+                # Find the meal name for this meal type
+                meal_name = "None"
+                if date_str in lunch_options:
+                    for meal in lunch_options[date_str]["meals"]:
+                        if meal["type"] == meal_type:
+                            meal_name = meal["name"]
+                            break
 
                 # Add valid meal selection to cart
                 cart[date_str] = meal_name
@@ -335,7 +362,10 @@ def add_to_cart():
 
         # Add flash message if any items were removed
         if removed_items:
-            flash(f"Some items were removed because ordering was closed: {', '.join(removed_items)}", "warning")
+            flash(
+                f"Some items were removed because ordering was closed: {', '.join(removed_items)}",
+                "warning",
+            )
 
         # Only show success message if there are items in the cart
         if cart:

@@ -171,14 +171,14 @@
                 emptyCartMessage.style.display = hasItems ? 'none' : 'block';
             }
             
-            for (const [date, mealType] of Object.entries(cart)) {
-                if (!mealType) continue; // Skip empty selections
+            for (const [date, mealName] of Object.entries(cart)) {
+                if (!mealName) continue; // Skip empty selections
                 
                 const tr = document.createElement('tr');
                 try {
-                    const meal = lunchOptions[date].meals.find(m => m.type === mealType);
+                    const meal = lunchOptions[date].meals.find(m => m.name === mealName);
                     if (!meal) {
-                        console.error('Could not find meal type:', mealType, 'for date:', date);
+                        console.error('Could not find meal:', mealName, 'for date:', date);
                         continue;
                     }
                     
@@ -198,11 +198,10 @@
                     `;
                     tbody.appendChild(tr);
                 } catch (error) {
-                    console.error('Error displaying cart item:', error);
+                    console.error('Error processing cart item:', error);
                 }
             }
             
-            // Update total
             if (cartTotal) {
                 cartTotal.innerHTML = `<strong>$${total.toFixed(2)}</strong>`;
             }

@@ -56,12 +56,7 @@
                                 <td>{{ date|datetimeformat }}</td>
                                 <td>
                                     {% if date in orders %}
-                                        {% set meal_type = orders[date] %}
-                                        {% for meal in lunch_options[date].meals %}
-                                            {% if meal.type == meal_type %}
-                                                {{ meal.name }}
-                                            {% endif %}
-                                        {% endfor %}
+                                        {{ orders[date] }}
                                     {% else %}
                                         No order placed
                                     {% endif %}
@@ -99,7 +94,14 @@
                                                     <i class="bi bi-check-circle-fill text-success"></i> Order already placed
                                                     <select class="form-select" disabled>
                                                         {% for meal in lunch_options[date].meals %}
-                                                            {% if meal.type == orders[date] %}
+                                                            <script>
+                                                                console.log('Comparing:', {
+                                                                    mealName: '{{ meal.name }}',
+                                                                    orderValue: '{{ orders[date] }}',
+                                                                    match: '{{ meal.name }}' === '{{ orders[date] }}'
+                                                                });
+                                                            </script>
+                                                            {% if meal.name == orders[date] %}
                                                                 <option value="{{ meal.type }}" selected>{{ meal.name }}</option>
                                                             {% endif %}
                                                         {% endfor %}
