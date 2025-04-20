@@ -132,7 +132,7 @@ class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     date = db.Column(db.Date, nullable=False)
-    meal_type = db.Column(db.String(1), nullable=False)  # N, V, C, B, P
+    meal_name = db.Column(db.String(100), nullable=False)  # Changed from meal_type to meal_name
 
 
 @login_manager.user_loader
@@ -192,7 +192,7 @@ def dashboard():
     # Get user's orders
     orders = Order.query.filter_by(user_id=current_user.id).all()
     # Convert orders to a serializable format
-    orders_dict = {order.date.strftime("%Y-%m-%d"): order.meal_type for order in orders}
+    orders_dict = {order.date.strftime("%Y-%m-%d"): order.meal_name for order in orders}
 
     # Get cart from session
     cart = session.get("cart", {})
@@ -232,7 +232,7 @@ def order():
     logger.debug(f"Ordered dates: {ordered_dates}")
 
     # Process all orders in the form
-    for key, meal_type in request.form.items():
+    for key, meal_name in request.form.items():
         if key.startswith("meal_type_"):
             date_str = key.replace("meal_type_", "")
 
@@ -243,7 +243,7 @@ def order():
 
             date = datetime.strptime(date_str, "%Y-%m-%d").date()
 
-            logger.debug(f"Processing order for date: {date}, meal_type: {meal_type}")
+            logger.debug(f"Processing order for date: {date}, meal_name: {meal_name}")
 
             # Check if order already exists for this date
             existing_order = Order.query.filter_by(
@@ -252,11 +252,11 @@ def order():
 
             if existing_order:
                 logger.debug(f"Updating existing order: {existing_order}")
-                existing_order.meal_type = meal_type
+                existing_order.meal_name = meal_name
             else:
                 logger.debug("Creating new order")
                 new_order = Order(
-                    user_id=current_user.id, date=date, meal_type=meal_type
+                    user_id=current_user.id, date=date, meal_name=meal_name
                 )
                 db.session.add(new_order)
 
@@ -297,20 +297,20 @@ def add_to_cart():
         removed_items = []
 
         # Process all selections in the form
-        for key, meal_type in request.form.items():
+        for key, meal_name in request.form.items():
             if key.startswith("meal_type_"):
                 date_str = key.replace("meal_type_", "")
                 logger.debug(
-                    f"Processing selection - date: {date_str}, meal_type: {meal_type}"
+                    f"Processing selection - date: {date_str}, meal_name: {meal_name}"
                 )
 
                 # Skip empty selections
-                if not meal_type or meal_type.strip() == "":
+                if not meal_name or meal_name.strip() == "":
                     logger.debug(f"Skipping empty selection for date: {date_str}")
                     continue
 
                 # Handle None selection
-                if meal_type == "N":
+                if meal_name == "N":
                     logger.debug(f"Handling None selection for date: {date_str}")
                     if date_str in cart:
                         del cart[date_str]
@@ -323,8 +323,8 @@ def add_to_cart():
                     continue
 
                 # Add valid meal selection to cart
-                cart[date_str] = meal_type
-                logger.debug(f"Added to cart - date: {date_str}, meal: {meal_type}")
+                cart[date_str] = meal_name
+                logger.debug(f"Added to cart - date: {date_str}, meal: {meal_name}")
 
         # Save the cart to session without clearing other session data
         session["cart"] = cart
@@ -354,7 +354,7 @@ def submit_cart():
     cart = session.get("cart", {})
 
     # Process all orders in the cart
-    for date_str, meal_type in cart.items():
+    for date_str, meal_name in cart.items():
         date = datetime.strptime(date_str, "%Y-%m-%d").date()
 
         # Check if order already exists for this date
@@ -363,9 +363,9 @@ def submit_cart():
         ).first()
 
         if existing_order:
-            existing_order.meal_type = meal_type
+            existing_order.meal_name = meal_name
         else:
-            new_order = Order(user_id=current_user.id, date=date, meal_type=meal_type)
+            new_order = Order(user_id=current_user.id, date=date, meal_name=meal_name)
             db.session.add(new_order)
 
     try:
@@ -452,3 +452,4 @@ if __name__ == "__main__":
     with app.app_context():
         # Create all database tables
         db.create_all()
+        app.run(debug=True)
