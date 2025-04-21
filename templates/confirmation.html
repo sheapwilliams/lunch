@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h2 class="card-title mb-4">Order Confirmation</h2>
+                    <div class="alert alert-success mb-4">
+                        <i class="bi bi-check-circle-fill"></i> Your order has been successfully placed!
+                    </div>
+                    
+                    <div class="text-start mb-4">
+                        <h5>Order Details</h5>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Meal</th>
+                                    <th class="text-end">Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for date, meal_name in order.items() %}
+                                <tr>
+                                    <td>{{ date }}</td>
+                                    <td>{{ meal_name }}</td>
+                                    <td class="text-end">${{ "%.2f"|format(prices[date]) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="2" class="text-end"><strong>Total:</strong></td>
+                                    <td class="text-end"><strong>${{ "%.2f"|format(total) }}</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <button onclick="window.print()" class="btn btn-primary me-md-2">
+                            <i class="bi bi-printer"></i> Print Receipt
+                        </button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-house"></i> Return to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <h2>Checkout</h2>
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Order Summary</h5>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Meal</th>
+                                <th class="text-end">Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for date, meal_name in cart.items() %}
+                            <tr>
+                                <td>{{ date }}</td>
+                                <td>{{ meal_name }}</td>
+                                <td class="text-end">${{ "%.2f"|format(lunch_options[date]["meals"]|selectattr('name', 'equalto', meal_name)|map(attribute='price')|first) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="2" class="text-end"><strong>Total:</strong></td>
+                                <td class="text-end"><strong>${{ "%.2f"|format(total) }}</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Payment Information</h5>
+                    <form id="payment-form">
+                        <div id="payment-element" class="mb-3">
+                            <!-- Stripe Payment Element will be inserted here -->
+                        </div>
+                        <div id="payment-errors" class="alert alert-danger d-none" role="alert"></div>
+                        <button type="submit" class="btn btn-primary w-100" id="submit-button">
+                            <span id="button-text">Pay ${{ "%.2f"|format(total) }}</span>
+                            <span id="spinner" class="spinner-border spinner-border-sm d-none" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script src="{{ url_for('static', filename='js/checkout.js') }}"></script>
+<script>
+    initializeCheckout('{{ stripe_public_key }}', '{{ client_secret }}');
+</script>
+{% endblock %} 

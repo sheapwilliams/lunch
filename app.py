@@ -25,6 +25,7 @@ import json
 import logging
 from config import get_timezone, get_cutoff_time, LOCATION
 import pytz
+import stripe
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -40,6 +41,13 @@ app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=1)
 app.config["SESSION_COOKIE_SECURE"] = False  # Set to True in production
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+# Configure Stripe
+stripe.api_key = os.environ.get("STRIPE_SECRET_KEY")
+STRIPE_PUBLIC_KEY = os.environ.get("STRIPE_PUBLIC_KEY")
+
+# Log Stripe key status (without exposing actual keys)
+app.logger.info(f"Stripe keys loaded: {'Secret key' if stripe.api_key else 'No secret key'}, {'Public key' if STRIPE_PUBLIC_KEY else 'No public key'}")
 
 
 # Add datetimeformat filter
@@ -470,12 +478,177 @@ def delete_order():
 @login_required
 def cart():
     lunch_options = load_lunch_options()
-    return render_template(
-        "cart.html",
-        cart=session.get("cart", {}),
-        lunch_options_json=lunch_options,
-        location=LOCATION,
+    cart = session.get("cart", {})
+    total = sum(
+        next((m["price"] for m in lunch_options[date]["meals"] if m["name"] == meal_name), 0)
+        for date, meal_name in cart.items()
     )
+    return render_template(
+        "cart.html", 
+        cart=cart, 
+        lunch_options=lunch_options, 
+        total=total,
+        location=LOCATION
+    )
+
+
+@app.route("/checkout")
+@login_required
+def checkout():
+    app.logger.info("Starting checkout process")
+    
+    # Verify Stripe key is loaded
+    if not STRIPE_PUBLIC_KEY or not stripe.api_key:
+        app.logger.error("Stripe keys not properly configured")
+        flash("Payment system not properly configured. Please contact support.", "error")
+        return redirect(url_for("cart"))
+    
+    cart = session.get("cart", {})
+    if not cart:
+        flash("Your cart is empty", "warning")
+        return redirect(url_for("cart"))
+
+    # Load lunch options
+    lunch_options = load_lunch_options()
+
+    # Calculate total
+    total = 0
+    for date, meal_name in cart.items():
+        meal = next((m for m in lunch_options[date]["meals"] if m["name"] == meal_name), None)
+        if meal:
+            total += meal["price"]
+    
+    app.logger.info(f"Cart total: ${total}")
+
+    try:
+        app.logger.info("Creating PaymentIntent")
+        # Create a PaymentIntent with the order amount and currency
+        intent = stripe.PaymentIntent.create(
+            amount=int(total * 100),  # amount in cents
+            currency="usd",
+            automatic_payment_methods={
+                "enabled": True,
+            },
+        )
+        app.logger.info(f"PaymentIntent created successfully: {intent.id}")
+        
+        return render_template(
+            "checkout.html",
+            cart=cart,
+            lunch_options=lunch_options,
+            total=total,
+            stripe_public_key=STRIPE_PUBLIC_KEY,
+            client_secret=intent.client_secret,
+            location=LOCATION
+        )
+    except stripe.error.StripeError as e:
+        app.logger.error(f"Stripe error creating payment intent: {str(e)}")
+        flash("Error processing payment. Please try again.", "error")
+        return redirect(url_for("cart"))
+    except Exception as e:
+        app.logger.error(f"Unexpected error creating payment intent: {str(e)}")
+        flash("Error setting up payment. Please try again.", "error")
+        return redirect(url_for("cart"))
+
+
+@app.route("/process_payment", methods=["POST"])
+@login_required
+def process_payment():
+    try:
+        data = request.get_json()
+        cart = data.get("cart")
+        
+        if not cart:
+            return jsonify({"success": False, "error": "Invalid request"}), 400
+        
+        # Load lunch options
+        lunch_options = load_lunch_options()
+        
+        # Calculate total amount
+        total = 0
+        for date, meal_name in cart.items():
+            meal = next(
+                (m for m in lunch_options[date]["meals"] if m["name"] == meal_name), None
+            )
+            if meal:
+                total += meal["price"]
+        
+        # Create PaymentIntent
+        intent = stripe.PaymentIntent.create(
+            amount=int(total * 100),  # Convert to cents
+            currency="usd",
+            automatic_payment_methods={"enabled": True},
+        )
+        
+        # Store cart and intent details in session
+        session["payment_intent"] = intent.id
+        session["cart"] = cart
+        
+        return jsonify({
+            "clientSecret": intent.client_secret
+        })
+        
+    except Exception as e:
+        logger.error(f"Payment processing error: {str(e)}")
+        return jsonify(
+            {"success": False, "error": "An error occurred processing your payment"}
+        ), 500
+
+
+@app.route("/confirmation")
+@login_required
+def confirmation():
+    try:
+        # Retrieve the PaymentIntent
+        intent_id = session.get("payment_intent")
+        if not intent_id:
+            flash("No payment found", "warning")
+            return redirect(url_for("checkout"))
+            
+        intent = stripe.PaymentIntent.retrieve(intent_id)
+        
+        if intent.status != "succeeded":
+            flash("Payment not completed", "warning")
+            return redirect(url_for("checkout"))
+            
+        # Load lunch options
+        lunch_options = load_lunch_options()
+        cart = session.get("cart", {})
+        
+        # Save orders to database
+        for date, meal_name in cart.items():
+            date_obj = datetime.strptime(date, "%Y-%m-%d").date()
+            order = Order(
+                user_id=current_user.id, date=date_obj, meal_name=meal_name
+            )
+            db.session.add(order)
+        
+        db.session.commit()
+        
+        # Calculate prices for confirmation page
+        prices = {
+            date: next(
+                (m["price"] for m in lunch_options[date]["meals"] if m["name"] == meal_name), 0
+            )
+            for date, meal_name in cart.items()
+        }
+        total = sum(prices.values())
+        
+        # Clear session data
+        session.pop("payment_intent", None)
+        session.pop("cart", None)
+        
+        return render_template(
+            "confirmation.html",
+            order=cart,
+            prices=prices,
+            total=total,
+        )
+        
+    except Exception as e:
+        logger.error(f"Confirmation error: {str(e)}")
+        flash("Error processing confirmation", "warning")
+        return redirect(url_for("checkout"))
 
 
 if __name__ == "__main__":

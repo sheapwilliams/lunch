@@ -3,26 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lunch Ordering System</title>
+    <title>{% block title %}{% endblock %} - Lunch Ordering</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <style>
-        .cart-icon {
-            position: relative;
-            margin-right: 10px;
-        }
-        .cart-badge {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            font-size: 0.7em;
+        .navbar-brand img {
+            height: 30px;
         }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
                 <img src="{{ url_for('static', filename=location.icon) }}" alt="{{ location.display_name }}" height="30" class="me-2">
                 {{ location.display_name }}
             </a>
@@ -33,23 +26,31 @@
                 <ul class="navbar-nav ms-auto">
                     {% if current_user.is_authenticated %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link cart-icon" href="{{ url_for('cart') }}">
-                                <i class="bi bi-cart3" style="font-size: 1.5rem;"></i>
-                                <span id="header-cart-count" class="badge bg-primary cart-badge">0</span>
+                            <a class="nav-link" href="{{ url_for('dashboard') }}">
+                                <i class="bi bi-house-door"></i> Dashboard
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                            <a class="nav-link" href="{{ url_for('cart') }}">
+                                <i class="bi bi-cart"></i> Cart
+                                <span class="badge bg-primary rounded-pill" id="cart-count">0</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('logout') }}">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </a>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                            <a class="nav-link" href="{{ url_for('login') }}">
+                                <i class="bi bi-box-arrow-in-right"></i> Login
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('register') }}">Register</a>
+                            <a class="nav-link" href="{{ url_for('register') }}">
+                                <i class="bi bi-person-plus"></i> Register
+                            </a>
                         </li>
                     {% endif %}
                 </ul>
@@ -58,13 +59,10 @@
     </nav>
 
     <div class="container mt-4">
-        {% with messages = get_flashed_messages() %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-info alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
@@ -74,157 +72,19 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Initialize cart from server data or empty object if not defined
-        let cart = JSON.parse('{{ cart|default({})|tojson|safe }}');
-        const lunchOptions = JSON.parse('{{ lunch_options_json|default({})|tojson|safe }}');
+        // Initialize cart from server data
+        const cart = {{ cart|tojson|safe }};
+        const lunchOptions = {{ lunch_options|tojson|safe }};
         
-        // Clear the entire cart
-        function clearCart() {
-            // Send request to server to clear cart
-            fetch('/clear_cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            }).then(response => {
-                if (response.ok) {
-                    cart = {};
-                    updateCartDisplay();
-                    flash('Cart cleared successfully!');
-                }
-            });
-        }
-        
-        // Initialize cart display and handle tab activation
-        document.addEventListener('DOMContentLoaded', () => {
-            updateCartCount();
-            updateCartDisplay();
-            
-            // Check if we should activate a specific tab
-            const urlParams = new URLSearchParams(window.location.search);
-            const tab = urlParams.get('tab');
-            const hash = window.location.hash;
-            console.log('URL params:', urlParams.toString());
-            console.log('Hash:', hash);
-            
-            // First try to activate tab from URL parameter
-            if (tab) {
-                const tabElement = document.getElementById(`${tab}-tab`);
-                console.log('Tab element:', tabElement);
-                if (tabElement) {
-                    console.log('Activating tab:', tab);
-                    const bsTab = new bootstrap.Tab(tabElement);
-                    bsTab.show();
-                }
-            }
-            
-            // Then try to scroll to anchor if present
-            if (hash) {
-                const element = document.querySelector(hash);
-                if (element) {
-                    element.scrollIntoView({ behavior: 'smooth' });
-                }
-            }
-        });
-        
-        // Update cart count badge
-        function updateCartCount() {
-            const count = Object.keys(cart).length;
-            const cartCount = document.getElementById('cart-count');
-            const headerCartCount = document.getElementById('header-cart-count');
-            if (cartCount) {
-                cartCount.textContent = count;
-            }
-            if (headerCartCount) {
-                headerCartCount.textContent = count;
-            }
-        }
-        
-        // Helper function to format date string to day name
-        function getWeekdayFromDateString(dateStr) {
-            const [year, month, day] = dateStr.split('-').map(Number);
-            const date = new Date(year, month - 1, day);  // month is 0-based in JavaScript
-            return date.toLocaleDateString('en-US', {weekday: 'long'});
-        }
-        
-        // Update cart display
         function updateCartDisplay() {
-            const tbody = document.getElementById('cart-items');
-            const cartButtons = document.getElementById('cart-buttons');
-            const emptyCartMessage = document.getElementById('empty-cart-message');
-            const cartTotal = document.getElementById('cart-total');
-            
-            if (!tbody) return;
-            
-            tbody.innerHTML = '';
-            console.log('Updating cart display with cart:', cart);
-            console.log('Lunch options:', lunchOptions);
-            
-            const hasItems = Object.keys(cart).length > 0;
-            let total = 0;
-            
-            // Show/hide buttons and message based on cart contents
-            if (cartButtons) {
-                cartButtons.style.display = hasItems ? 'block' : 'none';
+            const cartCount = document.getElementById('cart-count');
+            if (cartCount) {
+                cartCount.textContent = Object.keys(cart).length;
             }
-            if (emptyCartMessage) {
-                emptyCartMessage.style.display = hasItems ? 'none' : 'block';
-            }
-            
-            for (const [date, mealName] of Object.entries(cart)) {
-                if (!mealName) continue; // Skip empty selections
-                
-                const tr = document.createElement('tr');
-                try {
-                    const meal = lunchOptions[date].meals.find(m => m.name === mealName);
-                    if (!meal) {
-                        console.error('Could not find meal:', mealName, 'for date:', date);
-                        continue;
-                    }
-                    
-                    total += meal.price;
-                    
-                    tr.innerHTML = `
-                        <td>${date}</td>
-                        <td>${getWeekdayFromDateString(date)}</td>
-                        <td>${lunchOptions[date].restaurant}</td>
-                        <td>${meal.name}</td>
-                        <td class="text-end">$${meal.price.toFixed(2)}</td>
-                        <td>
-                            <button type="button" class="btn btn-danger btn-sm" onclick="removeFromCart('${date}')">
-                                Remove
-                            </button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                } catch (error) {
-                    console.error('Error processing cart item:', error);
-                }
-            }
-            
-            if (cartTotal) {
-                cartTotal.innerHTML = `<strong>$${total.toFixed(2)}</strong>`;
-            }
-            
-            updateCartCount();
         }
         
-        // Remove item from cart
-        function removeFromCart(date) {
-            delete cart[date];
-            // Send request to server to update cart
-            fetch('/remove_from_cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ date: date })
-            }).then(response => {
-                if (response.ok) {
-                    updateCartDisplay();
-                }
-            });
-        }
+        // Update cart count on page load
+        updateCartDisplay();
     </script>
 </body>
 </html> 
