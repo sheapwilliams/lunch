@@ -7,6 +7,8 @@ from flask import (
     flash,
     session,
     jsonify,
+    send_from_directory,
+    g,
 )
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
@@ -80,6 +82,10 @@ def before_request():
             session["user_id"] = current_user.id
         session.permanent = True
         session.modified = True
+    
+    # Make cart and lunch_options available to all templates
+    g.cart = session.get("cart", {})
+    g.lunch_options = load_lunch_options()
 
 
 # Helper function to check if ordering is closed for a date
@@ -649,6 +655,11 @@ def confirmation():
         logger.error(f"Confirmation error: {str(e)}")
         flash("Error processing confirmation", "warning")
         return redirect(url_for("checkout"))
+
+
+@app.route('/js/<path:filename>')
+def serve_js(filename):
+    return send_from_directory('js', filename)
 
 
 if __name__ == "__main__":
