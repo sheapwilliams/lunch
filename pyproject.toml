@@ -9,6 +9,7 @@ dependencies = [
     "Flask>=3.1.0",
     "Flask-SQLAlchemy>=3.1.1",
     "Flask-Login>=0.6.3",
+    "flask-session",
     "gunicorn",
     "Werkzeug>=3.1",
     "python-dotenv>=1.0.1",
