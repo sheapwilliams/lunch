@@ -1,0 +1,11 @@
+#cloud-config
+
+package_update: false
+package_upgrade: false
+packages:
+  - curl
+  - unzip
+  - docker.io
+
+cloud_final_modules:
+  - [package_update_upgrade_install, always]
