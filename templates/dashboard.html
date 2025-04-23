@@ -38,7 +38,7 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link {% if request.args.get('tab') == 'confirmations' %}active{% endif %}" 
                         id="confirmations-tab" data-bs-toggle="tab" data-bs-target="#confirmations" type="button" role="tab">
-                    Past Confirmations
+                    Receipts
                 </button>
             </li>
         </ul>
@@ -183,7 +183,7 @@
                         </div>
                     {% else %}
                         <div class="alert alert-info">
-                            <i class="bi bi-info-circle"></i> You don't have any past confirmations yet.
+                            <i class="bi bi-info-circle"></i> You don't have any receipts yet.
                         </div>
                     {% endif %}
                 </div>
