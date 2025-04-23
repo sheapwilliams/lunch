@@ -213,46 +213,48 @@ def register():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    # Load lunch options first
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+    user = User.query.get(user_id)
+
+    # Initialize lunch options
     lunch_options = load_lunch_options()
 
     # Get dates from lunch options
-    week_dates = sorted(lunch_options.keys())
+    week_dates = list(lunch_options.keys())
 
-    # Get user's orders
-    orders = Order.query.filter_by(user_id=current_user.id).all()
-    # Convert orders to a serializable format
-    orders_dict = {}
-    for order in orders:
-        date_str = order.date.strftime("%Y-%m-%d")
-        orders_dict[date_str] = order.meal_name
+    # Check which dates have closed ordering
+    ordering_closed = {
+        date: is_ordering_closed(datetime.strptime(date, "%Y-%m-%d").date())
+        for date in week_dates
+    }
+
+    # Fetch past confirmations for the user
+    confirmations = (
+        Order.query.filter_by(user_id=user_id).order_by(Order.date.desc()).all()
+    )
+
+    # Create orders dictionary
+    orders = {
+        order.date.strftime("%Y-%m-%d"): order.meal_name for order in confirmations
+    }
 
     # Get cart from session
     cart = session.get("cart", {})
 
-    # Check which dates have ordering closed
-    ordering_closed = {}
-    for date_str in week_dates:
-        date = datetime.strptime(date_str, "%Y-%m-%d").date()
-        ordering_closed[date_str] = is_ordering_closed(date)
-
-    # Debug logging
-    app.logger.debug(f"Week dates: {week_dates}")
-    app.logger.debug(f"Lunch options: {lunch_options}")
-    app.logger.debug(f"Orders: {orders_dict}")
-    app.logger.debug(f"Cart: {cart}")
-    app.logger.debug(f"Ordering closed: {ordering_closed}")
-
-    template_vars = {
-        "week_dates": week_dates,
-        "lunch_options": lunch_options,
-        "orders": orders_dict,
-        "cart": cart,
-        "ordering_closed": ordering_closed,
-        "location": LOCATION,
-    }
-
-    return render_template("dashboard.html", **template_vars)
+    return render_template(
+        "dashboard.html",
+        user=user,
+        confirmations=confirmations,
+        lunch_options=lunch_options,
+        location=LOCATION,
+        week_dates=week_dates,
+        orders=orders,
+        cart=cart,
+        ordering_closed=ordering_closed,
+    )
 
 
 @app.route("/order", methods=["POST"])
@@ -673,6 +675,65 @@ def confirmation():
 @app.route("/js/<path:filename>")
 def serve_js(filename):
     return send_from_directory("js", filename)
+
+
+# Add print confirmation route
+@app.route("/print-confirmation/<payment_intent_id>")
+@login_required
+def print_confirmation(payment_intent_id):
+    try:
+        # Verify the order belongs to the current user
+        orders = (
+            Order.query.filter_by(
+                user_id=current_user.id, payment_intent_id=payment_intent_id
+            )
+            .order_by(Order.date)
+            .all()
+        )
+
+        if not orders:
+            flash("Order not found", "error")
+            return redirect(url_for("dashboard"))
+
+        # Get payment details from Stripe
+        intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+
+        # Load lunch options for meal details
+        lunch_options = load_lunch_options()
+
+        # Format order details
+        order_details = []
+        for order in orders:
+            date_str = order.date.strftime("%Y-%m-%d")
+            if date_str in lunch_options:
+                meal_price = next(
+                    (
+                        m["price"]
+                        for m in lunch_options[date_str]["meals"]
+                        if m["name"] == order.meal_name
+                    ),
+                    0,
+                )
+                order_details.append(
+                    {
+                        "date": order.date,
+                        "meal_name": order.meal_name,
+                        "price": meal_price,
+                    }
+                )
+
+        return render_template(
+            "print_confirmation.html",
+            orders=order_details,
+            total=intent.amount / 100,  # Convert cents to dollars
+            payment_id=payment_intent_id,
+            date=orders[0].date,
+            location=LOCATION,
+        )
+
+    except stripe.error.StripeError as e:
+        flash("Error retrieving order details", "error")
+        return redirect(url_for("dashboard"))
 
 
 if __name__ == "__main__":
