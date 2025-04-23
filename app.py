@@ -9,7 +9,6 @@ from flask import (
     jsonify,
     send_from_directory,
     g,
-    make_response,
 )
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
@@ -604,6 +603,7 @@ def checkout():
         )
 
     except stripe.error.StripeError as e:
+        app.logger.error(f"Stripe error: {str(e)}")
         flash("Error processing payment. Please try again.", "error")
         return redirect(url_for("cart"))
 
@@ -781,6 +781,7 @@ def print_confirmation(payment_intent_id):
         )
 
     except stripe.error.StripeError as e:
+        app.logger.error(f"Stripe error in print confirmation: {str(e)}")
         flash("Error retrieving order details", "error")
         return redirect(url_for("dashboard"))
 
