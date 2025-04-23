@@ -9,6 +9,7 @@ from flask import (
     jsonify,
     send_from_directory,
     g,
+    make_response,
 )
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
@@ -181,7 +182,14 @@ def login():
 
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
-            return redirect(url_for("dashboard"))
+
+            # Check if there's a pending payment to process
+            if "pending_payment_intent" in session:
+                return redirect(url_for("confirmation"))
+
+            next_page = request.args.get("next")
+            return redirect(next_page if next_page else url_for("dashboard"))
+
         flash("Invalid username or password")
     return render_template("login.html", location=LOCATION)
 
@@ -520,7 +528,6 @@ def checkout():
 
     # Verify Stripe key is loaded
     if not STRIPE_PUBLIC_KEY or not stripe.api_key:
-        app.logger.error("Stripe keys not properly configured")
         flash(
             "Payment system not properly configured. Please contact support.", "error"
         )
@@ -531,31 +538,28 @@ def checkout():
         flash("Your cart is empty", "warning")
         return redirect(url_for("cart"))
 
-    # Load lunch options
+    # Load lunch options and calculate total
     lunch_options = load_lunch_options()
-
-    # Calculate total
-    total = 0
-    for date, meal_name in cart.items():
-        meal = next(
-            (m for m in lunch_options[date]["meals"] if m["name"] == meal_name), None
+    total = sum(
+        next(
+            (
+                m["price"]
+                for m in lunch_options[date]["meals"]
+                if m["name"] == meal_name
+            ),
+            0,
         )
-        if meal:
-            total += meal["price"]
-
-    app.logger.info(f"Cart total: ${total}")
+        for date, meal_name in cart.items()
+    )
 
     try:
-        app.logger.info("Creating PaymentIntent")
-        # Create a PaymentIntent with the order amount and currency
+        # Create a PaymentIntent
         intent = stripe.PaymentIntent.create(
             amount=int(total * 100),  # amount in cents
             currency="usd",
-            automatic_payment_methods={
-                "enabled": True,
-            },
+            automatic_payment_methods={"enabled": True},
+            metadata={"cart": json.dumps(cart)},  # Store cart in metadata
         )
-        app.logger.info(f"PaymentIntent created successfully: {intent.id}")
 
         return render_template(
             "checkout.html",
@@ -566,83 +570,50 @@ def checkout():
             client_secret=intent.client_secret,
             location=LOCATION,
         )
+
     except stripe.error.StripeError as e:
-        app.logger.error(f"Stripe error creating payment intent: {str(e)}")
         flash("Error processing payment. Please try again.", "error")
         return redirect(url_for("cart"))
-    except Exception as e:
-        app.logger.error(f"Unexpected error creating payment intent: {str(e)}")
-        flash("Error setting up payment. Please try again.", "error")
-        return redirect(url_for("cart"))
-
-
-@app.route("/process_payment", methods=["POST"])
-@login_required
-def process_payment():
-    try:
-        data = request.get_json()
-        cart = data.get("cart")
-
-        if not cart:
-            return jsonify({"success": False, "error": "Invalid request"}), 400
-
-        # Load lunch options
-        lunch_options = load_lunch_options()
-
-        # Calculate total amount
-        total = 0
-        for date, meal_name in cart.items():
-            meal = next(
-                (m for m in lunch_options[date]["meals"] if m["name"] == meal_name),
-                None,
-            )
-            if meal:
-                total += meal["price"]
-
-        # Create PaymentIntent
-        intent = stripe.PaymentIntent.create(
-            amount=int(total * 100),  # Convert to cents
-            currency="usd",
-            automatic_payment_methods={"enabled": True},
-        )
-
-        # Store cart and intent details in session
-        session["payment_intent"] = intent.id
-        session["cart"] = cart
-
-        return jsonify({"clientSecret": intent.client_secret})
-
-    except Exception as e:
-        logger.error(f"Payment processing error: {str(e)}")
-        return jsonify(
-            {"success": False, "error": "An error occurred processing your payment"}
-        ), 500
 
 
 @app.route("/confirmation")
-@login_required
 def confirmation():
     try:
-        # Retrieve the PaymentIntent
-        intent_id = session.get("payment_intent")
-        if not intent_id:
+        # Get payment intent from URL params
+        payment_intent_id = request.args.get("payment_intent")
+        if not payment_intent_id:
             flash("No payment found", "warning")
-            return redirect(url_for("checkout"))
+            return redirect(url_for("cart"))
 
-        intent = stripe.PaymentIntent.retrieve(intent_id)
-
+        # Retrieve the payment intent from Stripe
+        intent = stripe.PaymentIntent.retrieve(payment_intent_id)
         if intent.status != "succeeded":
             flash("Payment not completed", "warning")
-            return redirect(url_for("checkout"))
+            return redirect(url_for("cart"))
+
+        # Retrieve cart from payment intent metadata
+        cart = json.loads(intent.metadata.get("cart", "{}"))
+        if not cart:
+            flash("Order information not found", "warning")
+            return redirect(url_for("cart"))
+
+        # If user is not logged in, store the payment intent ID in session and redirect to login
+        if not current_user.is_authenticated:
+            session["pending_payment_intent"] = payment_intent_id
+            return redirect(url_for("login", next=url_for("confirmation")))
 
         # Load lunch options
         lunch_options = load_lunch_options()
-        cart = session.get("cart", {})
 
         # Save orders to database
         for date, meal_name in cart.items():
             date_obj = datetime.strptime(date, "%Y-%m-%d").date()
-            order = Order(user_id=current_user.id, date=date_obj, meal_name=meal_name)
+            order = Order(
+                user_id=current_user.id,
+                date=date_obj,
+                meal_name=meal_name,
+                payment_intent_id=payment_intent_id,
+            )
             db.session.add(order)
 
         db.session.commit()
@@ -661,9 +632,9 @@ def confirmation():
         }
         total = sum(prices.values())
 
-        # Clear session data
-        session.pop("payment_intent", None)
+        # Clear cart from session
         session.pop("cart", None)
+        session.pop("pending_payment_intent", None)  # Clear the stored payment intent
 
         return render_template(
             "confirmation.html",
@@ -673,46 +644,9 @@ def confirmation():
         )
 
     except Exception as e:
-        logger.error(f"Confirmation error: {str(e)}")
+        app.logger.error(f"Confirmation error: {str(e)}")
         flash("Error processing confirmation", "warning")
-        return redirect(url_for("checkout"))
-
-
-@app.route("/confirm-payment", methods=["POST"])
-def confirm_payment():
-    try:
-        data = json.loads(request.data)
-        payment_intent_id = data["payment_intent_id"]
-
-        # Verify the payment was successful with Stripe
-        payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
-
-        if payment_intent.status == "succeeded":
-            # Get the order details from the session
-            order_details = session.get("order_details")
-            if not order_details:
-                return jsonify({"error": "No order details found"}), 400
-
-            # Create and save the order
-            order = Order(
-                user_id=current_user.id,
-                date=datetime.strptime(order_details["date"], "%Y-%m-%d").date(),
-                meal_name=order_details["meal_name"],
-                payment_intent_id=payment_intent_id,  # Save the payment intent ID
-            )
-            db.session.add(order)
-            db.session.commit()
-
-            # Clear the order details from session
-            session.pop("order_details", None)
-
-            return jsonify({"success": True})
-        else:
-            return jsonify({"error": "Payment not successful"}), 400
-
-    except Exception as e:
-        app.logger.error(f"Error confirming payment: {str(e)}")
-        return jsonify({"error": str(e)}), 400
+        return redirect(url_for("cart"))
 
 
 @app.route("/js/<path:filename>")

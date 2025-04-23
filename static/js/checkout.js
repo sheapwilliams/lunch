@@ -2,45 +2,40 @@
 form.addEventListener('submit', async (event) => {
     event.preventDefault();
     
-    const { error: submitError } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-            return_url: `${window.location.origin}/confirmation`,
-        },
-        redirect: "if_required"
-    });
-
-    if (submitError) {
-        const messageContainer = document.querySelector('#error-message');
-        messageContainer.textContent = submitError.message;
-        return;
-    }
-
-    // Payment successful, get the payment intent ID
-    const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
+    // Show spinner and disable button
+    const submitButton = document.querySelector('#submit-button');
+    const buttonText = document.querySelector('#button-text');
+    const spinner = document.querySelector('#spinner');
+    const messageContainer = document.querySelector('#error-message');
     
-    // Send the payment intent ID to the backend
+    submitButton.disabled = true;
+    buttonText.classList.add('d-none');
+    spinner.classList.remove('d-none');
+    messageContainer.classList.add('d-none');
+    
     try {
-        const response = await fetch('/confirm-payment', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                payment_intent_id: paymentIntent.id
-            })
+        const { error } = await stripe.confirmPayment({
+            elements,
+            confirmParams: {
+                return_url: `${window.location.origin}/confirmation?payment_intent={PAYMENT_INTENT}`,
+            }
         });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            window.location.href = '/confirmation';
-        } else {
-            const messageContainer = document.querySelector('#error-message');
-            messageContainer.textContent = result.error || 'An error occurred during payment confirmation';
+
+        if (error) {
+            // Handle payment error
+            messageContainer.textContent = error.message;
+            messageContainer.classList.remove('d-none');
+            submitButton.disabled = false;
+            buttonText.classList.remove('d-none');
+            spinner.classList.add('d-none');
         }
+        // Don't need an else clause - confirmPayment will redirect on success
     } catch (error) {
-        const messageContainer = document.querySelector('#error-message');
-        messageContainer.textContent = 'An error occurred during payment confirmation';
+        // Handle unexpected errors
+        messageContainer.textContent = 'An unexpected error occurred. Please try again.';
+        messageContainer.classList.remove('d-none');
+        submitButton.disabled = false;
+        buttonText.classList.remove('d-none');
+        spinner.classList.add('d-none');
     }
 }); 
