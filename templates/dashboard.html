@@ -89,7 +89,7 @@
                                         <td>{{ date|datetimeformat }}</td>
                                         <td>{{ lunch_options[date].restaurant }}</td>
                                         <td>
-                                            {% if date in orders and orders[date] != 'N' %}
+                                            {% if date in orders and orders[date] != 'None' %}
                                                 <div class="text-muted">
                                                     <i class="bi bi-check-circle-fill text-success"></i> Order already placed
                                                     <select class="form-select" disabled>
@@ -102,7 +102,7 @@
                                                                 });
                                                             </script>
                                                             {% if meal.name == orders[date] %}
-                                                                <option value="{{ meal.type }}" selected>{{ meal.name }}</option>
+                                                                <option value="{{ meal.name }}" selected>{{ meal.name }}</option>
                                                             {% endif %}
                                                         {% endfor %}
                                                     </select>
@@ -114,17 +114,17 @@
                                             {% else %}
                                                 <div class="mb-2">
                                                     {% for meal in lunch_options[date].meals %}
-                                                        {% if meal.type != 'N' %}
+                                                        {% if meal.name != 'None' %}
                                                             <div class="mb-1">
                                                                 <strong>${{ "%.2f"|format(meal.price) }} - {{ meal.name }}:</strong> {{ meal.desc }}
                                                             </div>
                                                         {% endif %}
                                                     {% endfor %}
                                                 </div>
-                                                <select name="meal_type_{{ date }}" class="form-select">
+                                                <select name="meal_{{ date }}" class="form-select">
                                                     <option value="">Select an option</option>
                                                     {% for meal in lunch_options[date].meals %}
-                                                        <option value="{{ meal.type }}">${{ "%.2f"|format(meal.price) }} - {{ meal.name }}</option>
+                                                        <option value="{{ meal.name }}">${{ "%.2f"|format(meal.price) }} - {{ meal.name }}</option>
                                                     {% endfor %}
                                                 </select>
                                             {% endif %}

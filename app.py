@@ -142,7 +142,7 @@ def load_lunch_options():
 
 # Database Models
 class User(UserMixin, db.Model):
-    __tablename__ = 'users'
+    __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(120), nullable=False)
@@ -150,7 +150,7 @@ class User(UserMixin, db.Model):
 
 
 class Order(db.Model):
-    __tablename__ = 'orders'
+    __tablename__ = "orders"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     date = db.Column(db.Date, nullable=False)
@@ -268,9 +268,9 @@ def order():
     logger.debug(f"Ordered dates: {ordered_dates}")
 
     # Process all orders in the form
-    for key, meal_type in request.form.items():
-        if key.startswith("meal_type_"):
-            date_str = key.replace("meal_type_", "")
+    for key, meal_name in request.form.items():
+        if key.startswith("meal_"):
+            date_str = key.replace("meal_", "")
 
             # Skip if this date already has an order
             if date_str in ordered_dates:
@@ -279,13 +279,17 @@ def order():
 
             date = datetime.strptime(date_str, "%Y-%m-%d").date()
 
-            # Find the meal name for this meal type
-            meal_name = "None"
+            # Verify the meal exists in the options
             if date_str in lunch_options:
-                for meal in lunch_options[date_str]["meals"]:
-                    if meal["type"] == meal_type:
-                        meal_name = meal["name"]
-                        break
+                meal_exists = any(
+                    meal["name"] == meal_name
+                    for meal in lunch_options[date_str]["meals"]
+                )
+                if not meal_exists:
+                    logger.error(
+                        f"Invalid meal selection: {meal_name} for date {date_str}"
+                    )
+                    continue
 
             logger.debug(f"Processing order for date: {date}, meal_name: {meal_name}")
 
@@ -306,7 +310,6 @@ def order():
 
     try:
         db.session.commit()
-        logger.debug("Orders saved successfully")
         flash("Orders saved successfully!")
     except Exception as e:
         logger.error(f"Error saving orders: {e}")
@@ -344,20 +347,20 @@ def add_to_cart():
         removed_items = []
 
         # Process all selections in the form
-        for key, meal_type in request.form.items():
-            if key.startswith("meal_type_"):
-                date_str = key.replace("meal_type_", "")
+        for key, meal_name in request.form.items():
+            if key.startswith("meal_"):
+                date_str = key.replace("meal_", "")
                 logger.debug(
-                    f"Processing selection - date: {date_str}, meal_type: {meal_type}"
+                    f"Processing selection - date: {date_str}, meal_name: {meal_name}"
                 )
 
                 # Skip empty selections
-                if not meal_type or meal_type.strip() == "":
+                if not meal_name or meal_name.strip() == "":
                     logger.debug(f"Skipping empty selection for date: {date_str}")
                     continue
 
                 # Handle None selection
-                if meal_type == "N":
+                if meal_name == "None":
                     logger.debug(f"Handling None selection for date: {date_str}")
                     if date_str in cart:
                         del cart[date_str]
@@ -369,17 +372,23 @@ def add_to_cart():
                     removed_items.append(date_str)
                     continue
 
-                # Find the meal name for this meal type
-                meal_name = "None"
+                # Verify the meal exists in the options
                 if date_str in lunch_options:
-                    for meal in lunch_options[date_str]["meals"]:
-                        if meal["type"] == meal_type:
-                            meal_name = meal["name"]
-                            break
-
-                # Add valid meal selection to cart
-                cart[date_str] = meal_name
-                logger.debug(f"Added to cart - date: {date_str}, meal: {meal_name}")
+                    meal_exists = any(
+                        meal["name"] == meal_name
+                        for meal in lunch_options[date_str]["meals"]
+                    )
+                    if meal_exists:
+                        # Add valid meal selection to cart
+                        cart[date_str] = meal_name
+                        logger.debug(
+                            f"Added to cart - date: {date_str}, meal: {meal_name}"
+                        )
+                    else:
+                        logger.error(
+                            f"Invalid meal selection: {meal_name} for date {date_str}"
+                        )
+                        continue
 
         # Save the cart to session without clearing other session data
         session["cart"] = cart
@@ -578,7 +587,7 @@ def checkout():
 def confirmation():
     try:
         # Get payment intent from URL params
-        payment_intent_id = request.args.get('payment_intent')
+        payment_intent_id = request.args.get("payment_intent")
         if not payment_intent_id:
             flash("No payment found", "warning")
             return redirect(url_for("cart"))
@@ -597,8 +606,8 @@ def confirmation():
 
         # If user is not logged in, store the payment intent ID in session and redirect to login
         if not current_user.is_authenticated:
-            session['pending_payment_intent'] = payment_intent_id
-            return redirect(url_for('login', next=url_for('confirmation')))
+            session["pending_payment_intent"] = payment_intent_id
+            return redirect(url_for("login", next=url_for("confirmation")))
 
         # Load lunch options
         lunch_options = load_lunch_options()
@@ -610,7 +619,7 @@ def confirmation():
                 user_id=current_user.id,
                 date=date_obj,
                 meal_name=meal_name,
-                payment_intent_id=payment_intent_id
+                payment_intent_id=payment_intent_id,
             )
             db.session.add(order)
 
@@ -619,7 +628,11 @@ def confirmation():
         # Calculate prices for confirmation page
         prices = {
             date: next(
-                (m["price"] for m in lunch_options[date]["meals"] if m["name"] == meal_name),
+                (
+                    m["price"]
+                    for m in lunch_options[date]["meals"]
+                    if m["name"] == meal_name
+                ),
                 0,
             )
             for date, meal_name in cart.items()
@@ -627,11 +640,7 @@ def confirmation():
         total = sum(prices.values())
 
         # Store order details for display
-        order_details = {
-            'cart': cart,
-            'prices': prices,
-            'total': total
-        }
+        order_details = {"cart": cart, "prices": prices, "total": total}
 
         # Clear cart from session and g.cart
         session["cart"] = {}
@@ -641,9 +650,9 @@ def confirmation():
 
         return render_template(
             "confirmation.html",
-            order=order_details['cart'],
-            prices=order_details['prices'],
-            total=order_details['total'],
+            order=order_details["cart"],
+            prices=order_details["prices"],
+            total=order_details["total"],
             location=LOCATION,
         )
 
@@ -651,12 +660,12 @@ def confirmation():
         app.logger.error(f"Confirmation error: {str(e)}")
         # Save the order even if there's a template error
         try:
-            if 'db' in locals() and db.session.new:
+            if "db" in locals() and db.session.new:
                 db.session.commit()
         except Exception as db_error:
             app.logger.error(f"Database error during error handling: {str(db_error)}")
             db.session.rollback()
-        
+
         flash("Error displaying confirmation page", "warning")
         return redirect(url_for("cart"))
 
