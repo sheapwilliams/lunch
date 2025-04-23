@@ -613,32 +613,50 @@ def confirmation():
     try:
         # Get payment intent from URL params
         payment_intent_id = request.args.get("payment_intent")
+        app.logger.info(
+            f"Confirmation route called with payment_intent_id: {payment_intent_id}"
+        )
+
         if not payment_intent_id:
+            app.logger.warning("No payment_intent_id found in request args")
             flash("No payment found", "warning")
             return redirect(url_for("cart"))
 
         # Retrieve the payment intent from Stripe
+        app.logger.info(f"Retrieving payment intent {payment_intent_id} from Stripe")
         intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+        app.logger.info(f"Payment intent status: {intent.status}")
+
         if intent.status != "succeeded":
+            app.logger.warning(f"Payment not completed. Status: {intent.status}")
             flash("Payment not completed", "warning")
             return redirect(url_for("cart"))
 
         # Retrieve cart from payment intent metadata
+        app.logger.info("Retrieving cart from payment intent metadata")
         cart = json.loads(intent.metadata.get("cart", "{}"))
+        app.logger.debug(f"Cart from metadata: {cart}")
+
         if not cart:
+            app.logger.warning("No cart found in payment intent metadata")
             flash("Order information not found", "warning")
             return redirect(url_for("cart"))
 
         # If user is not logged in, store the payment intent ID in session and redirect to login
         if not current_user.is_authenticated:
+            app.logger.info(
+                "User not authenticated, storing payment_intent_id in session and redirecting to login"
+            )
             session["pending_payment_intent"] = payment_intent_id
             return redirect(url_for("login", next=url_for("confirmation")))
 
         # Load lunch options
         lunch_options = load_lunch_options()
 
+        app.logger.info("Saving orders to database")
         # Save orders to database
         for date, meal_name in cart.items():
+            app.logger.debug(f"Processing order for date: {date}, meal: {meal_name}")
             date_obj = datetime.strptime(date, "%Y-%m-%d").date()
             order = Order(
                 user_id=current_user.id,
@@ -649,6 +667,7 @@ def confirmation():
             db.session.add(order)
 
         db.session.commit()
+        app.logger.info("Orders saved successfully")
 
         # Calculate prices for confirmation page
         prices = {
@@ -672,6 +691,7 @@ def confirmation():
         g.cart = {}
         session.pop("pending_payment_intent", None)
         session.modified = True
+        app.logger.info("Cart cleared from session")
 
         return render_template(
             "confirmation.html",
@@ -681,8 +701,8 @@ def confirmation():
             location=LOCATION,
         )
 
-    except Exception as e:
-        app.logger.error(f"Confirmation error: {str(e)}")
+    except stripe.error.StripeError as e:
+        app.logger.error(f"Stripe error during confirmation: {str(e)}")
         # Save the order even if there's a template error
         try:
             if "db" in locals() and db.session.new:
@@ -691,13 +711,19 @@ def confirmation():
             app.logger.error(f"Database error during error handling: {str(db_error)}")
             db.session.rollback()
 
+        flash("Error processing payment confirmation", "error")
+        return redirect(url_for("cart"))
+    except Exception as e:
+        app.logger.error(
+            f"Unexpected error in confirmation route: {str(e)}", exc_info=True
+        )
         flash("Error displaying confirmation page", "warning")
         return redirect(url_for("cart"))
 
 
 @app.route("/js/<path:filename>")
 def serve_js(filename):
-    return send_from_directory("js", filename)
+    return send_from_directory("static/js", filename)
 
 
 # Add print confirmation route
