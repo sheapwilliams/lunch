@@ -232,14 +232,37 @@ def dashboard():
     }
 
     # Fetch past confirmations for the user
-    confirmations = (
+    all_orders = (
         Order.query.filter_by(user_id=user_id).order_by(Order.date.desc()).all()
     )
 
-    # Create orders dictionary
-    orders = {
-        order.date.strftime("%Y-%m-%d"): order.meal_name for order in confirmations
-    }
+    # Group orders by payment_intent_id
+    confirmations = {}
+    for order in all_orders:
+        if order.payment_intent_id:
+            if order.payment_intent_id not in confirmations:
+                confirmations[order.payment_intent_id] = {
+                    "dates": [],
+                    "meals": [],
+                    "first_date": order.date,  # Keep track of the first date for sorting
+                }
+            confirmations[order.payment_intent_id]["dates"].append(
+                order.date.strftime("%B %d, %Y")
+            )
+            confirmations[order.payment_intent_id]["meals"].append(order.meal_name)
+
+    # Convert to list and sort by first date
+    confirmations_list = [
+        {"payment_intent_id": pid, "dates": data["dates"], "meals": data["meals"]}
+        for pid, data in confirmations.items()
+    ]
+    confirmations_list.sort(
+        key=lambda x: max([datetime.strptime(d, "%B %d, %Y") for d in x["dates"]]),
+        reverse=True,
+    )
+
+    # Create orders dictionary for the current week view
+    orders = {order.date.strftime("%Y-%m-%d"): order.meal_name for order in all_orders}
 
     # Get cart from session
     cart = session.get("cart", {})
@@ -247,7 +270,7 @@ def dashboard():
     return render_template(
         "dashboard.html",
         user=user,
-        confirmations=confirmations,
+        confirmations=confirmations_list,
         lunch_options=lunch_options,
         location=LOCATION,
         week_dates=week_dates,
