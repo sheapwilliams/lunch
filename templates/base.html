@@ -35,7 +35,7 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('cart') }}">
                                 <i class="bi bi-cart"></i> Cart
-                                <span class="badge bg-primary rounded-pill" id="cart-count">0</span>
+                                <span class="badge bg-primary rounded-pill" id="cart-count">{{ g.cart|length }}</span>
                             </a>
                         </li>
                         <li class="nav-item">

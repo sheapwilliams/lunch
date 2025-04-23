@@ -142,6 +142,7 @@ def load_lunch_options():
 
 # Database Models
 class User(UserMixin, db.Model):
+    __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(120), nullable=False)
@@ -149,15 +150,12 @@ class User(UserMixin, db.Model):
 
 
 class Order(db.Model):
+    __tablename__ = 'orders'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     date = db.Column(db.Date, nullable=False)
-    meal_name = db.Column(
-        db.String(100), nullable=False
-    )  # Changed from meal_type to meal_name
-    payment_intent_id = db.Column(
-        db.String(100), nullable=True
-    )  # Store Stripe PaymentIntent ID
+    meal_name = db.Column(db.String(100), nullable=False)
+    payment_intent_id = db.Column(db.String(100), nullable=True)
 
 
 @login_manager.user_loader
@@ -580,7 +578,7 @@ def checkout():
 def confirmation():
     try:
         # Get payment intent from URL params
-        payment_intent_id = request.args.get("payment_intent")
+        payment_intent_id = request.args.get('payment_intent')
         if not payment_intent_id:
             flash("No payment found", "warning")
             return redirect(url_for("cart"))
@@ -599,8 +597,8 @@ def confirmation():
 
         # If user is not logged in, store the payment intent ID in session and redirect to login
         if not current_user.is_authenticated:
-            session["pending_payment_intent"] = payment_intent_id
-            return redirect(url_for("login", next=url_for("confirmation")))
+            session['pending_payment_intent'] = payment_intent_id
+            return redirect(url_for('login', next=url_for('confirmation')))
 
         # Load lunch options
         lunch_options = load_lunch_options()
@@ -612,7 +610,7 @@ def confirmation():
                 user_id=current_user.id,
                 date=date_obj,
                 meal_name=meal_name,
-                payment_intent_id=payment_intent_id,
+                payment_intent_id=payment_intent_id
             )
             db.session.add(order)
 
@@ -621,31 +619,45 @@ def confirmation():
         # Calculate prices for confirmation page
         prices = {
             date: next(
-                (
-                    m["price"]
-                    for m in lunch_options[date]["meals"]
-                    if m["name"] == meal_name
-                ),
+                (m["price"] for m in lunch_options[date]["meals"] if m["name"] == meal_name),
                 0,
             )
             for date, meal_name in cart.items()
         }
         total = sum(prices.values())
 
-        # Clear cart from session
-        session.pop("cart", None)
-        session.pop("pending_payment_intent", None)  # Clear the stored payment intent
+        # Store order details for display
+        order_details = {
+            'cart': cart,
+            'prices': prices,
+            'total': total
+        }
+
+        # Clear cart from session and g.cart
+        session["cart"] = {}
+        g.cart = {}
+        session.pop("pending_payment_intent", None)
+        session.modified = True
 
         return render_template(
             "confirmation.html",
-            order=cart,
-            prices=prices,
-            total=total,
+            order=order_details['cart'],
+            prices=order_details['prices'],
+            total=order_details['total'],
+            location=LOCATION,
         )
 
     except Exception as e:
         app.logger.error(f"Confirmation error: {str(e)}")
-        flash("Error processing confirmation", "warning")
+        # Save the order even if there's a template error
+        try:
+            if 'db' in locals() and db.session.new:
+                db.session.commit()
+        except Exception as db_error:
+            app.logger.error(f"Database error during error handling: {str(db_error)}")
+            db.session.rollback()
+        
+        flash("Error displaying confirmation page", "warning")
         return redirect(url_for("cart"))
 
 
