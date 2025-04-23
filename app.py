@@ -59,7 +59,7 @@ app.logger.info(
 def datetimeformat(value):
     try:
         date = datetime.strptime(value, "%Y-%m-%d")
-        return date.strftime("%A, %B %d")
+        return date.strftime("%A")  # Only return the day name
     except ValueError:
         return value
 
@@ -246,7 +246,7 @@ def dashboard():
                     "first_date": order.date,  # Keep track of the first date for sorting
                 }
             confirmations[order.payment_intent_id]["dates"].append(
-                order.date.strftime("%B %d, %Y")
+                order.date.strftime("%Y-%m-%d")
             )
             confirmations[order.payment_intent_id]["meals"].append(order.meal_name)
 
@@ -256,7 +256,7 @@ def dashboard():
         for pid, data in confirmations.items()
     ]
     confirmations_list.sort(
-        key=lambda x: max([datetime.strptime(d, "%B %d, %Y") for d in x["dates"]]),
+        key=lambda x: max([datetime.strptime(d, "%Y-%m-%d") for d in x["dates"]]),
         reverse=True,
     )
 
