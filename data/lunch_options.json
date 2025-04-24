@@ -1,0 +1,192 @@
+{
+    "daily_options": {
+        "2025-04-28": {
+            "restaurant": "Mi Chola",
+            "meals": [
+                {
+                    "name": "None",
+                    "type": "N",
+                    "desc": "No Lunch Selected",
+                    "price": 0
+                },
+                {
+                    "name": "Harvest Bowl",
+                    "type": "V",
+                    "desc": "Roasted veggies, jalapeno-cilantro rice, black beans, pico de gallo, radish, pickled onions",
+                    "price": 34.00
+                },
+                {
+                    "name": "Chicken Chile Verde Burrito",
+                    "type": "C",
+                    "desc": "Cascabel chile, poblano, onions, tomatillo, pico de gallo, crema",
+                    "price": 34.00
+                },
+                {
+                    "name": "Chimichurri Carne Asada Burrito",
+                    "type": "B",
+                    "desc": "Chimichurri, Refried Beans, French Fries, avocado, mixed cheese, pico de gallo, lettuce",
+                    "price": 37.00
+                },
+                {
+                    "name": "Chimichanga",
+                    "type": "P",
+                    "desc": "Carnitas, queso fresco, guacamole, crema, pico de gallo, rice + beans on side",
+                    "price": 34.00
+                }
+            ]
+        },
+        "2025-04-29": {
+            "restaurant": "CP Burger",
+            "meals": [
+                {
+                    "name": "None",
+                    "type": "N",
+                    "desc": "No Lunch Selected",
+                    "price": 0
+                },
+                {
+                    "name": "CP Burger",
+                    "type": "B",
+                    "desc": "⅓ lb Burger, Cheddar, Lettuce, Tomato, Onion, CP Sauce + Hand-Cut Fries",
+                    "price": 29.00
+                },
+                {
+                    "name": "Summit Burger",
+                    "type": "B",
+                    "desc": "⅓ lb Burger, Applewood Smoked Bacon, Lettuce, Tomato, Caramelized Onions, Blue Cheese, CP Sauce + Hand-Cut Fries",
+                    "price": 31.00
+                },
+                {
+                    "name": "Chicken Burger",
+                    "type": "C",
+                    "desc": "Grilled Chicken, Swiss, Tomato, Onion, CP Sauce + Hand-Cut Fries",
+                    "price": 30.00
+                },
+                {
+                    "name": "Tuna Burger",
+                    "type": "F",
+                    "desc": "Tuna, Kale, Miso-Viniagrette, Tomato, Onion, Wasabi Aioli + Hand-Cut Fries",
+                    "price": 32.00
+                },
+                {
+                    "name": "Falafel Burger",
+                    "type": "V",
+                    "desc": "Hummus, Tzatziki, Lettuce, Tomato, Cucumber, Onion + Hand-Cut Fries",
+                    "price": 30.00
+                }
+            ]
+        },
+        "2025-04-30": {
+            "restaurant": "Phatt Pho N Sushi",
+            "meals": [
+                {
+                    "name": "None",
+                    "type": "N",
+                    "desc": "No Lunch Selected",
+                    "price": 0
+                },
+                {
+                    "name": "Bun Ga Xao Sa",
+                    "type": "C",
+                    "desc": "Grilled lemongrass chicken with veggie egg roll",
+                    "price": 31.00
+                },
+                {
+                    "name": "Bun Bo Xao Sa",
+                    "type": "B",
+                    "desc": "Grilled lemongrass beef with veggie egg roll",
+                    "price": 32.00
+                },
+                {
+                    "name": "Bun Husa",
+                    "type": "V",
+                    "desc": "Grilled lemongrass tofu with veggie egg roll",
+                    "price": 28.00
+                },
+                {
+                    "name": "Bun Cha Gio Chay",
+                    "type": "V",
+                    "desc": "Fried vegetarian egg roll",
+                    "price": 27.00
+                }
+            ]
+        },
+        "2025-05-01": {
+            "restaurant": "Silver Peak Grill",
+            "meals": [
+                {
+                    "name": "None",
+                    "type": "N",
+                    "desc": "No Lunch Selected",
+                    "price": 0
+                },
+                {
+                    "name": "Grilled Chicken Tacos",
+                    "type": "C",
+                    "desc": "Grilled Chicken with Tomatillo Salsa, Pico and Fresh Cilantro",
+                    "price": 25.00
+                },
+                {
+                    "name": "Philly Cheese Steak",
+                    "type": "B",
+                    "desc": "Classic hoagie bun, shaved sirloin steak, onions, melted american cheese and spicy mayo",
+                    "price": 24.00
+                },
+                {
+                    "name": "Carne Asada Burrito",
+                    "type": "B",
+                    "desc": "Grilled sirloin steak, tomatillo salsa, pico, french fries, shredded lettuce and guacamole",
+                    "price": 28.00
+                },
+                {
+                    "name": "Fish Tacos",
+                    "type": "F",
+                    "desc": "Grilled wahoo, topped with chipotle lime slaw, chipotle aioli, pico, and fresh cilantro.",
+                    "price": 29.00
+                }
+
+            ]
+        },
+        "2025-05-02": {
+            "restaurant": "Hickory House",
+            "meals": [
+                {
+                    "name": "None",
+                    "type": "N",
+                    "desc": "No Lunch Selected",
+                    "price": 0
+                },
+                {
+                    "name": "Black Bean Burger",
+                    "type": "V",
+                    "desc": "Zesty blend of black beans, brown rice, onions, peppers, corn, lettuce tomato & pickle. Fries and coleslaw",
+                    "price": 28.00
+                },
+                {
+                    "name": "Smoked Beef Brisket",
+                    "type": "B",
+                    "desc": "Beef brisket, fries, cole slaw and garlic toast",
+                    "price": 30.00
+                },
+                {
+                    "name": "Smoked Pulled Pork",
+                    "type": "P",
+                    "desc": "Pulled pork, fries, cole slaw and garlic toast",
+                    "price": 27.00
+                },
+                {
+                    "name": "Grilled Chicken Breast Sandwich",
+                    "type": "C",
+                    "desc": "8oz chicken breast topped with BBQ sauce, fries and coleslaw",
+                    "price": 30.00
+                },
+                {
+                    "name": "Fish & Chips",
+                    "type": "F",
+                    "desc": "Hand-breaded Alaskan pollock with slaw",
+                    "price": 30.00
+                }
+            ]
+        }
+    }
+} 
