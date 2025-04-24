@@ -2,6 +2,9 @@
 *.db
 instance/*.db
 
+# Flask sessions
+flask_session/
+
 # Virtual environment
 .venv/
 venv/
