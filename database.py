@@ -1,23 +1,30 @@
 import logging
 import os
+import fcntl
 from models import db
+from sqlalchemy import inspect
 
 # Configure logging
 logger = logging.getLogger(__name__)
+
+def tables_exist(app):
+    """Check if all required tables exist"""
+    with app.app_context():
+        inspector = inspect(db.engine)
+        existing_tables = set(inspector.get_table_names())
+        required_tables = {'users', 'orders'}
+        return required_tables.issubset(existing_tables)
 
 def init_db(app):
     """Initialize the database, create tables if they don't exist"""
     try:
         with app.app_context():
-            # Create all tables
+            if tables_exist(app):
+                logger.info("Required tables already exist")
+                return True
+                
             db.create_all()
             logger.info("Database tables created successfully")
-            
-            # Verify tables exist
-            inspector = db.inspect(db.engine)
-            tables = inspector.get_table_names()
-            logger.info(f"Existing tables: {tables}")
-            
             return True
     except Exception as e:
         logger.error(f"Error initializing database: {e}")
@@ -39,34 +46,39 @@ def setup_db(app):
             os.makedirs(instance_path, mode=0o755)
             logger.info(f"Created instance directory at {instance_path}")
 
-        # Create database file if it doesn't exist
-        db_path = os.path.join(instance_path, "lunch.db")
-        if not os.path.exists(db_path):
-            os.close(os.open(db_path, os.O_CREAT))
-            os.chmod(db_path, 0o666)  # Read/write for all users
-            logger.info(f"Created database file at {db_path}")
+        # Create lock file path
+        lock_path = os.path.join(instance_path, "db.lock")
+        
+        # Acquire lock for database initialization
+        with open(lock_path, 'w') as lock_file:
+            try:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+                logger.debug("Acquired database initialization lock")
+                
+                # Create database file if it doesn't exist
+                db_path = os.path.join(instance_path, "lunch.db")
+                if not os.path.exists(db_path):
+                    os.close(os.open(db_path, os.O_CREAT))
+                    os.chmod(db_path, 0o666)
+                    logger.info(f"Created database file at {db_path}")
+                else:
+                    logger.info(f"Database file already exists at {db_path}")
 
-        # Ensure the database file has the correct permissions
-        os.chmod(db_path, 0o666)
-        logger.info("Set database file permissions to 0o666")
-
-        # Log paths for debugging
-        logger.info(f"Current working directory: {os.getcwd()}")
-        logger.info(f"Database path: {db_path}")
-        logger.info(f"Database path exists: {os.path.exists(db_path)}")
-        logger.info(f"Database path is absolute: {os.path.isabs(db_path)}")
-
-        # Configure SQLAlchemy
-        app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
-        
-        # Initialize the db with the app
-        db.init_app(app)
-        
-        # Create tables
-        init_db(app)
-        
-        return DATA_DIR
-        
+                # Configure SQLAlchemy
+                app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
+                
+                # Initialize the db with the app
+                db.init_app(app)
+                
+                # Initialize tables if needed
+                init_db(app)
+                
+                return DATA_DIR
+                
+            finally:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+                logger.debug("Released database initialization lock")
+                
     except Exception as e:
         logger.error(f"Error setting up database: {e}")
         raise 
