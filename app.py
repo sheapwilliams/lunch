@@ -10,10 +10,8 @@ from flask import (
     send_from_directory,
     g,
 )
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
     LoginManager,
-    UserMixin,
     login_user,
     login_required,
     logout_user,
@@ -28,19 +26,30 @@ import logging
 from config import get_timezone, get_cutoff_time, LOCATION
 import pytz
 import stripe
+from models import db, User, Order
+from database import setup_db
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+
+# Setup database and get DATA_DIR
+DATA_DIR = setup_db(app)
+
+# Create flask session directory if it doesn't exist
+session_dir = os.path.join(DATA_DIR, "flask_session")
+if not os.path.exists(session_dir):
+    os.makedirs(session_dir, mode=0o755)
+    logger.info(f"Created flask session directory at {session_dir}")
+
 app.config["SECRET_KEY"] = os.urandom(24).hex()
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///lunch.db"
 app.config["SESSION_TYPE"] = "filesystem"
-app.config["SESSION_FILE_DIR"] = os.path.join(os.getcwd(), "flask_session")
+app.config["SESSION_FILE_DIR"] = session_dir
 app.config["SESSION_PERMANENT"] = True
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=1)
-app.config["SESSION_COOKIE_SECURE"] = False  # Set to True in production
+app.config["SESSION_COOKIE_SECURE"] = True
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
@@ -53,6 +62,15 @@ app.logger.info(
     f"Stripe keys loaded: {'Secret key' if stripe.api_key else 'No secret key'}, {'Public key' if STRIPE_PUBLIC_KEY else 'No public key'}"
 )
 
+# Initialize other extensions
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
+Session(app)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 # Add datetimeformat filter
 @app.template_filter("datetimeformat")
@@ -62,14 +80,6 @@ def datetimeformat(value):
         return date.strftime("%A")  # Only return the day name
     except ValueError:
         return value
-
-
-db = SQLAlchemy(app)
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = "login"
-Session(app)
-
 
 # Initialize session for new users
 @app.before_request
@@ -88,7 +98,6 @@ def before_request():
     # Make cart and lunch_options available to all templates
     g.cart = session.get("cart", {})
     g.lunch_options = load_lunch_options()
-
 
 # Helper function to check if ordering is closed for a date
 def is_ordering_closed(date):
@@ -128,7 +137,6 @@ def is_ordering_closed(date):
     app.logger.debug("Ordering is open for this date")
     return False
 
-
 # Load lunch options from JSON file
 def load_lunch_options():
     options_path = os.path.join(
@@ -138,37 +146,12 @@ def load_lunch_options():
         data = json.load(f)
         return data["daily_options"]
 
-
-# Database Models
-class User(UserMixin, db.Model):
-    __tablename__ = "users"
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password_hash = db.Column(db.String(120), nullable=False)
-    orders = db.relationship("Order", backref="user", lazy=True)
-
-
-class Order(db.Model):
-    __tablename__ = "orders"
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    date = db.Column(db.Date, nullable=False)
-    meal_name = db.Column(db.String(100), nullable=False)
-    payment_intent_id = db.Column(db.String(100), nullable=True)
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
-
-
 # Routes
 @app.route("/")
 def index():
     if current_user.is_authenticated:
         return redirect(url_for("dashboard"))
     return render_template("index.html", location=LOCATION)
-
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -190,7 +173,6 @@ def login():
         flash("Invalid username or password")
     return render_template("login.html", location=LOCATION)
 
-
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -207,7 +189,6 @@ def register():
 
         return redirect(url_for("login"))
     return render_template("register.html", location=LOCATION)
-
 
 @app.route("/dashboard")
 @login_required
@@ -278,7 +259,6 @@ def dashboard():
         ordering_closed=ordering_closed,
     )
 
-
 @app.route("/order", methods=["POST"])
 @login_required
 def order():
@@ -342,7 +322,6 @@ def order():
 
     return redirect(url_for("dashboard"))
 
-
 @app.route("/logout")
 @login_required
 def logout():
@@ -350,7 +329,6 @@ def logout():
     session.clear()
     logout_user()
     return redirect(url_for("index"))
-
 
 @app.route("/add_to_cart", methods=["POST"])
 @login_required
@@ -438,7 +416,6 @@ def add_to_cart():
         flash("Error adding items to cart. Please try again.")
         return redirect(url_for("dashboard"))
 
-
 @app.route("/submit_cart", methods=["POST"])
 @login_required
 def submit_cart():
@@ -471,7 +448,6 @@ def submit_cart():
 
     return redirect(url_for("dashboard"))
 
-
 @app.route("/remove_from_cart", methods=["POST"])
 @login_required
 def remove_from_cart():
@@ -487,7 +463,6 @@ def remove_from_cart():
 
     return jsonify({"success": False}), 400
 
-
 @app.route("/clear_cart", methods=["POST"])
 @login_required
 def clear_cart():
@@ -498,7 +473,6 @@ def clear_cart():
     except Exception as e:
         logger.error(f"Error clearing cart: {e}")
         return jsonify({"success": False}), 500
-
 
 @app.route("/delete_order", methods=["POST"])
 @login_required
@@ -526,7 +500,6 @@ def delete_order():
 
     return redirect(url_for("dashboard"))
 
-
 @app.route("/cart")
 @login_required
 def cart():
@@ -550,7 +523,6 @@ def cart():
         total=total,
         location=LOCATION,
     )
-
 
 @app.route("/checkout")
 @login_required
@@ -606,7 +578,6 @@ def checkout():
         app.logger.error(f"Stripe error: {str(e)}")
         flash("Error processing payment. Please try again.", "error")
         return redirect(url_for("cart"))
-
 
 @app.route("/confirmation")
 def confirmation():
@@ -720,11 +691,9 @@ def confirmation():
         flash("Error displaying confirmation page", "warning")
         return redirect(url_for("cart"))
 
-
 @app.route("/js/<path:filename>")
 def serve_js(filename):
     return send_from_directory("static/js", filename)
-
 
 # Add print confirmation route
 @app.route("/print-confirmation/<payment_intent_id>")
@@ -784,7 +753,6 @@ def print_confirmation(payment_intent_id):
         app.logger.error(f"Stripe error in print confirmation: {str(e)}")
         flash("Error retrieving order details", "error")
         return redirect(url_for("dashboard"))
-
 
 if __name__ == "__main__":
     with app.app_context():
