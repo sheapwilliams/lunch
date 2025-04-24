@@ -24,4 +24,4 @@ RUN uv venv --python=3.13
 COPY --chown=lunch:lunch . .
 
 EXPOSE 8000
-CMD ["uv", "run", "gunicorn", "--bind", "0.0.0.0:8000", "wsgi:app"]
+CMD ["./scripts/configure_data.sh"]
