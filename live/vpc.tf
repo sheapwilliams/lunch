@@ -58,6 +58,25 @@ resource "google_compute_firewall" "allow_private_google_access_egress" {
   }
 }
 
+resource "google_compute_firewall" "allow_health_check_ingress" {
+  name        = "${var.env}-allow-health-check-ingress"
+  project     = var.project
+  network     = google_compute_network.vpc.id
+  description = "Allow health check ingress"
+  direction   = "INGRESS"
+  priority    = 10000
+
+  source_ranges = [
+    local.health_check_cidr_range,
+    local.health_check2_cidr_range,
+  ]
+
+  allow {
+    protocol = "tcp"
+    ports    = ["8000"]
+  }
+}
+
 resource "google_compute_firewall" "allow_ssh_https_ingress" {
   name        = "${var.env}-allow-ssh-https-ingress"
   project     = var.project
