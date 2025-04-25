@@ -3,8 +3,8 @@ resource "google_compute_instance" "webserver" {
   project      = var.project
   zone         = "${var.region}-c"
   description  = "Web server for lunch"
-  machine_type = "e2-medium"
-#   machine_type = "e2-standard-2"
+  # machine_type = "e2-medium"
+  machine_type = "e2-standard-2"
   labels       = {}
 
   metadata = {
@@ -34,7 +34,7 @@ resource "google_compute_instance" "webserver" {
 resource "google_compute_health_check" "webserver" {
   name                = "${var.env}-health-check"
   project             = var.project
-  check_interval_sec  = 5
+  check_interval_sec  = 20
   timeout_sec         = 5
   healthy_threshold   = 2
   unhealthy_threshold = 2
