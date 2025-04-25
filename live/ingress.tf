@@ -6,6 +6,24 @@ resource "google_compute_global_address" "webserver_ip" {
   description  = "Static IP for webserver"
 }
 
+resource "google_compute_backend_service" "webserver" {
+  provider              = google-beta
+  name                  = "${var.env}-webserver-backend"
+  project               = var.project
+  protocol              = "HTTP"
+  port_name             = "http"
+  timeout_sec           = 30
+  health_checks         = [google_compute_health_check.webserver.id]
+  load_balancing_scheme = "EXTERNAL_MANAGED"
+
+  backend {
+    group          = google_compute_instance_group.webserver.id
+    balancing_mode = "RATE"
+    max_rate       = 100
+  }
+}
+
+
 resource "google_compute_url_map" "webserver_url_map" {
   name            = "${var.env}-webserver-url-map"
   project         = var.project

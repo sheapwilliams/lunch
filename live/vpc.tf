@@ -245,20 +245,3 @@ resource "google_compute_network_firewall_policy_association" "fqdn_policy_assoc
   firewall_policy   = google_compute_network_firewall_policy.fqdn_policy.id
   attachment_target = google_compute_network.vpc.id
 }
-
-resource "google_compute_backend_service" "webserver" {
-  provider              = google-beta
-  name                  = "${var.env}-webserver-backend"
-  project               = var.project
-  protocol              = "HTTPS"
-  timeout_sec           = 30
-  health_checks         = [google_compute_health_check.webserver.id]
-  load_balancing_scheme = "EXTERNAL_MANAGED"
-
-  backend {
-    group          = google_compute_network_endpoint_group.webserver.id
-    balancing_mode = "RATE"
-    max_rate       = 100
-  }
-}
-
