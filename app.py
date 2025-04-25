@@ -71,9 +71,11 @@ login_manager.init_app(app)
 login_manager.login_view = "login"
 Session(app)
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
 
 # Add datetimeformat filter
 @app.template_filter("datetimeformat")
@@ -83,6 +85,7 @@ def datetimeformat(value):
         return date.strftime("%A")  # Only return the day name
     except ValueError:
         return value
+
 
 # Initialize session for new users
 @app.before_request
@@ -101,6 +104,7 @@ def before_request():
     # Make cart and lunch_options available to all templates
     g.cart = session.get("cart", {})
     g.lunch_options = load_lunch_options()
+
 
 # Helper function to check if ordering is closed for a date
 def is_ordering_closed(date):
@@ -140,6 +144,7 @@ def is_ordering_closed(date):
     app.logger.debug("Ordering is open for this date")
     return False
 
+
 # Load lunch options from JSON file
 def load_lunch_options():
     options_path = os.path.join(
@@ -149,12 +154,14 @@ def load_lunch_options():
         data = json.load(f)
         return data["daily_options"]
 
+
 # Routes
 @app.route("/")
 def index():
     if current_user.is_authenticated:
         return redirect(url_for("dashboard"))
     return render_template("index.html", location=LOCATION)
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -176,6 +183,7 @@ def login():
         flash("Invalid username or password")
     return render_template("login.html", location=LOCATION)
 
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -192,6 +200,7 @@ def register():
 
         return redirect(url_for("login"))
     return render_template("register.html", location=LOCATION)
+
 
 @app.route("/dashboard")
 @login_required
@@ -262,6 +271,7 @@ def dashboard():
         ordering_closed=ordering_closed,
     )
 
+
 @app.route("/order", methods=["POST"])
 @login_required
 def order():
@@ -325,6 +335,7 @@ def order():
 
     return redirect(url_for("dashboard"))
 
+
 @app.route("/logout")
 @login_required
 def logout():
@@ -332,6 +343,7 @@ def logout():
     session.clear()
     logout_user()
     return redirect(url_for("index"))
+
 
 @app.route("/add_to_cart", methods=["POST"])
 @login_required
@@ -419,6 +431,7 @@ def add_to_cart():
         flash("Error adding items to cart. Please try again.")
         return redirect(url_for("dashboard"))
 
+
 @app.route("/submit_cart", methods=["POST"])
 @login_required
 def submit_cart():
@@ -451,6 +464,7 @@ def submit_cart():
 
     return redirect(url_for("dashboard"))
 
+
 @app.route("/remove_from_cart", methods=["POST"])
 @login_required
 def remove_from_cart():
@@ -466,6 +480,7 @@ def remove_from_cart():
 
     return jsonify({"success": False}), 400
 
+
 @app.route("/clear_cart", methods=["POST"])
 @login_required
 def clear_cart():
@@ -476,6 +491,7 @@ def clear_cart():
     except Exception as e:
         logger.error(f"Error clearing cart: {e}")
         return jsonify({"success": False}), 500
+
 
 @app.route("/delete_order", methods=["POST"])
 @login_required
@@ -503,6 +519,7 @@ def delete_order():
 
     return redirect(url_for("dashboard"))
 
+
 @app.route("/cart")
 @login_required
 def cart():
@@ -526,6 +543,7 @@ def cart():
         total=total,
         location=LOCATION,
     )
+
 
 @app.route("/checkout")
 @login_required
@@ -581,6 +599,7 @@ def checkout():
         app.logger.error(f"Stripe error: {str(e)}")
         flash("Error processing payment. Please try again.", "error")
         return redirect(url_for("cart"))
+
 
 @app.route("/confirmation")
 def confirmation():
@@ -694,9 +713,11 @@ def confirmation():
         flash("Error displaying confirmation page", "warning")
         return redirect(url_for("cart"))
 
+
 @app.route("/js/<path:filename>")
 def serve_js(filename):
     return send_from_directory("static/js", filename)
+
 
 # Add print confirmation route
 @app.route("/print-confirmation/<payment_intent_id>")
@@ -756,6 +777,7 @@ def print_confirmation(payment_intent_id):
         app.logger.error(f"Stripe error in print confirmation: {str(e)}")
         flash("Error retrieving order details", "error")
         return redirect(url_for("dashboard"))
+
 
 if __name__ == "__main__":
     with app.app_context():
