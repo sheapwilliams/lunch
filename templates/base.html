@@ -76,5 +76,6 @@
     <script id="cart-data" type="application/json">{{ g.cart|tojson|safe }}</script>
     <script id="lunch-options-data" type="application/json">{{ g.lunch_options|tojson|safe }}</script>
     <script src="{{ url_for('serve_js', filename='cart.js') }}"></script>
+    {% block scripts %}{% endblock %}
 </body>
 </html> 

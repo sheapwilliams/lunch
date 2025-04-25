@@ -28,13 +28,8 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
-<script>
-document.getElementById('password').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        document.getElementById('loginForm').submit();
-    }
-});
-</script>
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/form-handler.js') }}"></script>
 {% endblock %} 
