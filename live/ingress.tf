@@ -66,3 +66,21 @@ resource "google_dns_record_set" "ingress_record_set" {
   managed_zone = data.google_dns_managed_zone.dns_zone.name
   rrdatas      = [google_compute_global_forwarding_rule.webserver_forwarding_rule.ip_address]
 }
+
+resource "google_dns_record_set" "redirect_to_cppnow_org" {
+  name         = "${data.google_dns_managed_zone.dns_zone.dns_name}"
+  project      = var.project
+  type         = "A"
+  ttl          = 300
+  managed_zone = data.google_dns_managed_zone.dns_zone.name
+  rrdatas      = [google_compute_global_forwarding_rule.webserver_forwarding_rule.ip_address]
+}
+
+resource "google_dns_record_set" "redirect_schedule_to_cppnow_org" {
+  name         = "schedule.${data.google_dns_managed_zone.dns_zone.dns_name}"
+  project      = var.project
+  type         = "A"
+  ttl          = 300
+  managed_zone = data.google_dns_managed_zone.dns_zone.name
+  rrdatas      = [google_compute_global_forwarding_rule.webserver_forwarding_rule.ip_address]
+}
