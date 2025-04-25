@@ -38,6 +38,9 @@ app = Flask(__name__)
 # Setup database and get DATA_DIR
 DATA_DIR = setup_db(app)
 
+# Store DATA_DIR in app config
+app.config["DATA_DIR"] = DATA_DIR
+
 # Create flask session directory if it doesn't exist
 session_dir = os.path.join(DATA_DIR, "flask_session")
 if not os.path.exists(session_dir):
