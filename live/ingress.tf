@@ -31,12 +31,13 @@ resource "google_compute_target_https_proxy" "webserver_https_proxy" {
 }
 
 resource "google_compute_global_forwarding_rule" "webserver_forwarding_rule" {
-  name        = "${var.env}-ssl-forwarding-rule"
-  project     = var.project
-  ip_protocol = "TCP"
-  port_range  = "443"
-  target      = google_compute_target_https_proxy.webserver_https_proxy.id
-  ip_address  = google_compute_global_address.webserver_ip.id
+  name                  = "${var.env}-ssl-forwarding-rule"
+  project               = var.project
+  ip_protocol           = "TCP"
+  port_range            = "443-443"
+  load_balancing_scheme = "EXTERNAL_MANAGED"
+  target                = google_compute_target_https_proxy.webserver_https_proxy.id
+  ip_address            = google_compute_global_address.webserver_ip.id
 }
 
 resource "google_dns_record_set" "ingress_record_set" {
