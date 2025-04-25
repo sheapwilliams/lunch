@@ -45,19 +45,18 @@ resource "google_compute_health_check" "webserver" {
   }
 }
 
-resource "google_compute_network_endpoint_group" "webserver" {
-  name         = "${var.env}-neg"
-  project      = var.project
-  network      = google_compute_network.vpc.id
-  subnetwork   = google_compute_subnetwork.subnet.id
-  default_port = 8000
-  zone         = google_compute_instance.webserver.zone
-}
+resource "google_compute_instance_group" "webserver" {
+  name        = "${var.env}-webservers"
+  description = "Webserver instance group"
 
-resource "google_compute_network_endpoint" "webserver" {
-  network_endpoint_group = google_compute_network_endpoint_group.webserver.name
-  instance               = google_compute_instance.webserver.name
-  port                   = 8000
-  ip_address             = google_compute_instance.webserver.network_interface[0].network_ip
-  zone                   = google_compute_instance.webserver.zone
+  instances = [
+    google_compute_instance.webserver.id,
+  ]
+
+  named_port {
+    name = "http"
+    port = "8000"
+  }
+
+  zone = "${var.region}-c"
 }
