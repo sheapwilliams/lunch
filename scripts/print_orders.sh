@@ -16,7 +16,7 @@ if ! [[ $DATE =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
 fi
 
 # Path to the SQLite database
-DB_PATH="instance/lunch.db"
+: ${DB_PATH:="instance/lunch.db"}
 
 # Check if database exists
 if [ ! -f "$DB_PATH" ]; then

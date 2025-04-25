@@ -8,7 +8,7 @@ if [ $# -ne 1 ]; then
 fi
 
 PAYMENT_INTENT_ID=$1
-DB_PATH="instance/lunch.db"
+: ${DB_PATH:="instance/lunch.db"}
 
 # Check if database exists
 if [ ! -f "$DB_PATH" ]; then

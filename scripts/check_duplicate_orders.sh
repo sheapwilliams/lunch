@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DB_PATH="lunch.db"
+: ${DB_PATH:="lunch.db"}
 
 # Check if database exists
 if [ ! -f "$DB_PATH" ]; then
