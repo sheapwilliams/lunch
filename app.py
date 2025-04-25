@@ -52,7 +52,7 @@ app.config["SESSION_TYPE"] = "filesystem"
 app.config["SESSION_FILE_DIR"] = session_dir
 app.config["SESSION_PERMANENT"] = True
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=1)
-app.config["SESSION_COOKIE_SECURE"] = True
+app.config["SESSION_COOKIE_SECURE"] = False  # Changed to False for development
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
@@ -168,17 +168,22 @@ def login():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+        logger.debug(f"Login attempt for username: {username}")
+
         user = User.query.filter_by(username=username).first()
+        if user:
+            if check_password_hash(user.password_hash, password):
+                login_user(user)
 
-        if user and check_password_hash(user.password_hash, password):
-            login_user(user)
+                # Check if there's a pending payment to process
+                if "pending_payment_intent" in session:
+                    logger.debug(
+                        "Redirecting to confirmation page due to pending payment"
+                    )
+                    return redirect(url_for("confirmation"))
 
-            # Check if there's a pending payment to process
-            if "pending_payment_intent" in session:
-                return redirect(url_for("confirmation"))
-
-            next_page = request.args.get("next")
-            return redirect(next_page if next_page else url_for("dashboard"))
+                next_page = request.args.get("next")
+                return redirect(next_page if next_page else url_for("dashboard"))
 
         flash("Invalid username or password")
     return render_template("login.html", location=LOCATION)
