@@ -28,6 +28,7 @@ if [ -z "$IS_PROD" ]; then
 fi
 
 docker run \
+    -it --rm \
     --init \
     -p 8000:8000 \
     --env-file $ENV_FILE \
