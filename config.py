@@ -5,7 +5,7 @@ from datetime import time
 LOCATION = {
     "name": "Denver",
     "timezone": "America/Denver",  # Uses pytz timezone format
-    "ordering_cutoff": time(hour=9, minute=30),  # 9:30 AM local time
+    "ordering_cutoff": time(hour=10, minute=30),  # 11:00 AM local time
     "display_name": "Aspen, CO",
     "icon": "cppnow-logo.png",  # Custom logo image
 }
