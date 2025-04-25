@@ -52,7 +52,7 @@ app.config["SESSION_TYPE"] = "filesystem"
 app.config["SESSION_FILE_DIR"] = session_dir
 app.config["SESSION_PERMANENT"] = True
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=1)
-app.config["SESSION_COOKIE_SECURE"] = False  # Changed to False for development
+app.config["SESSION_COOKIE_SECURE"] = True  # Changed to False for development
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
