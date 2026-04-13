@@ -15,7 +15,10 @@ class User(UserMixin, db.Model):
 
 class Order(db.Model):
     __tablename__ = "orders"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "date", name="uq_order_user_date"),
+        {"extend_existing": True},
+    )
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     date = db.Column(db.Date, nullable=False)
