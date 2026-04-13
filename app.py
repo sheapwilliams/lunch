@@ -26,6 +26,7 @@ import logging
 from config import get_timezone, get_cutoff_time, LOCATION
 import pytz
 import stripe
+from sqlalchemy.exc import IntegrityError
 from models import db, User, Order
 from database import setup_db
 
@@ -341,6 +342,23 @@ def order():
                 db.session.add(new_order)
 
     try:
+        db.session.commit()
+        flash("Orders saved successfully!")
+    except IntegrityError:
+        # A concurrent request inserted the same (user_id, date) between our
+        # SELECT and INSERT.  Roll back and update the existing row instead.
+        db.session.rollback()
+        for key, meal_name in request.form.items():
+            if key.startswith("meal_"):
+                date_str = key.replace("meal_", "")
+                if date_str in ordered_dates:
+                    continue
+                date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                existing = Order.query.filter_by(
+                    user_id=current_user.id, date=date
+                ).first()
+                if existing:
+                    existing.meal_name = meal_name
         db.session.commit()
         flash("Orders saved successfully!")
     except Exception as e:
