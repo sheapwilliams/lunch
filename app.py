@@ -662,20 +662,28 @@ def confirmation():
         lunch_options = load_lunch_options()
 
         app.logger.info("Saving orders to database")
-        # Save orders to database
-        for date, meal_name in cart.items():
-            app.logger.debug(f"Processing order for date: {date}, meal: {meal_name}")
-            date_obj = datetime.strptime(date, "%Y-%m-%d").date()
-            order = Order(
-                user_id=current_user.id,
-                date=date_obj,
-                meal_name=meal_name,
-                payment_intent_id=payment_intent_id,
-            )
-            db.session.add(order)
+        # Guard against double-saves (page reload, browser back+forward, etc.)
+        already_saved = Order.query.filter_by(
+            user_id=current_user.id,
+            payment_intent_id=payment_intent_id,
+        ).first()
 
-        db.session.commit()
-        app.logger.info("Orders saved successfully")
+        if not already_saved:
+            for date, meal_name in cart.items():
+                app.logger.debug(f"Processing order for date: {date}, meal: {meal_name}")
+                date_obj = datetime.strptime(date, "%Y-%m-%d").date()
+                order = Order(
+                    user_id=current_user.id,
+                    date=date_obj,
+                    meal_name=meal_name,
+                    payment_intent_id=payment_intent_id,
+                )
+                db.session.add(order)
+
+            db.session.commit()
+            app.logger.info("Orders saved successfully")
+        else:
+            app.logger.info("Orders already saved for this payment intent, skipping insert")
 
         # Calculate prices for confirmation page
         prices = {
