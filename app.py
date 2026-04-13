@@ -187,11 +187,12 @@ def login():
                 login_user(user)
 
                 # Check if there's a pending payment to process
-                if "pending_payment_intent" in session:
+                pending_pi = session.get("pending_payment_intent")
+                if pending_pi:
                     logger.debug(
                         "Redirecting to confirmation page due to pending payment"
                     )
-                    return redirect(url_for("confirmation"))
+                    return redirect(url_for("confirmation", payment_intent=pending_pi))
 
                 next_page = request.args.get("next")
                 return redirect(next_page if next_page else url_for("dashboard"))
