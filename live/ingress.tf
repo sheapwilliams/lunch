@@ -7,7 +7,6 @@ resource "google_compute_global_address" "webserver_ip" {
 }
 
 resource "google_compute_backend_service" "webserver" {
-  provider              = google-beta
   name                  = "${var.env}-webserver-backend"
   project               = var.project
   protocol              = "HTTP"
