@@ -18,6 +18,7 @@ from flask_login import (
     current_user,
 )
 from flask_session import Session
+from cachelib import FileSystemCache
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import os
@@ -48,9 +49,19 @@ if not os.path.exists(session_dir):
     os.makedirs(session_dir, mode=0o755)
     logger.info(f"Created flask session directory at {session_dir}")
 
-app.config["SECRET_KEY"] = os.urandom(24).hex()
-app.config["SESSION_TYPE"] = "filesystem"
-app.config["SESSION_FILE_DIR"] = session_dir
+_secret_key = os.environ.get("SECRET_KEY")
+if not _secret_key:
+    import warnings
+    warnings.warn(
+        "SECRET_KEY environment variable is not set. "
+        "A random key will be used, which invalidates all sessions on restart. "
+        "Set SECRET_KEY to a stable value in production.",
+        stacklevel=1,
+    )
+    _secret_key = os.urandom(24).hex()
+app.config["SECRET_KEY"] = _secret_key
+app.config["SESSION_TYPE"] = "cachelib"
+app.config["SESSION_CACHELIB"] = FileSystemCache(session_dir)
 app.config["SESSION_PERMANENT"] = True
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=1)
 app.config["SESSION_COOKIE_SECURE"] = True  # Changed to False for development
