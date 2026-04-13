@@ -6,16 +6,18 @@ authors = [
     {name = "Shea Williams", email = "shea@cppnow.com"}
 ]
 dependencies = [
-    "Flask>=3.1.0",
+    "Flask>=3.1.3",        # <3.1.3 has CVE-2025-47278, CVE-2026-27205
     "Flask-SQLAlchemy>=3.1.1",
     "Flask-Login>=0.6.3",
-    "flask-session",
-    "gunicorn",
-    "Werkzeug>=3.1",
+    "flask-session>=0.8.0",
+    "gunicorn>=25.3.0",
+    "Werkzeug>=3.1.6",     # <3.1.6 has CVE-2025-66221, CVE-2026-21860, CVE-2026-27199
     "python-dotenv>=1.0.1",
     "pytz",
     "sqlalchemy",
     "stripe>=12.0.0",
+    "requests>=2.33.0",    # <2.33.0 has CVE-2024-47081, CVE-2026-25645
+    "urllib3>=2.6.3",      # <2.6.3 has five CVEs (CVE-2025-50181/50182, CVE-2025-66418/66471, CVE-2026-21441)
 ]
 requires-python = ">=3.13"
 
