@@ -28,3 +28,7 @@ __pycache__/
 *.swo 
 
 .ruff_cache/
+
+# Terraform local state
+live/**/.terraform/
+live/**/.terraform.tfstate
