@@ -79,6 +79,33 @@ def test_webhook_is_idempotent(client, app_ctx):
         assert len(orders) == 1, f"Expected 1 order, got {len(orders)}"
 
 
+def test_webhook_ignores_malformed_cart_json(client, app_ctx):
+    """Webhook must return 200 and create no orders when cart metadata is not valid JSON."""
+    user_id = _create_user(app_ctx, username="malformed@example.com")
+    event = {
+        "id": "evt_test_malformed",
+        "type": "payment_intent.succeeded",
+        "data": {
+            "object": {
+                "id": "pi_malformed_789",
+                "object": "payment_intent",
+                "status": "succeeded",
+                "metadata": {
+                    "user_id": str(user_id),
+                    "cart": "this is not json {{{",
+                },
+            }
+        },
+    }
+
+    response = _post_webhook(client, event)
+
+    assert response.status_code == 200
+    with app_ctx.app_context():
+        orders = Order.query.filter_by(payment_intent_id="pi_malformed_789").all()
+        assert len(orders) == 0, "No orders should be created for malformed cart JSON"
+
+
 def test_webhook_rejects_invalid_signature(client, app_ctx):
     import stripe
     with patch(
