@@ -860,11 +860,21 @@ def webhook():
         user_id = metadata.get("user_id")
         cart_json = metadata.get("cart", "{}")
 
+        try:
+            user_id_int = int(user_id)
+        except (ValueError, TypeError):
+            app.logger.error(f"Webhook: invalid user_id '{user_id}' on {payment_intent_id}")
+            return "", 200
+
         if not user_id or not cart_json:
             app.logger.warning(f"Webhook: missing metadata on {payment_intent_id}")
             return "", 200
 
-        cart = json.loads(cart_json)
+        try:
+            cart = json.loads(cart_json)
+        except (ValueError, json.JSONDecodeError):
+            app.logger.error(f"Webhook: invalid cart JSON on {payment_intent_id}")
+            return "", 200
 
         already_saved = Order.query.filter_by(
             payment_intent_id=payment_intent_id
@@ -874,7 +884,7 @@ def webhook():
             for date, meal_name in cart.items():
                 date_obj = datetime.strptime(date, "%Y-%m-%d").date()
                 order = Order(
-                    user_id=int(user_id),
+                    user_id=user_id_int,
                     date=date_obj,
                     meal_name=meal_name,
                     payment_intent_id=payment_intent_id,
