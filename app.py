@@ -70,6 +70,7 @@ app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 # Configure Stripe
 stripe.api_key = os.environ.get("STRIPE_SECRET_KEY")
+stripe.api_version = "2026-03-25.dahlia"
 STRIPE_PUBLIC_KEY = os.environ.get("STRIPE_PUBLIC_KEY")
 
 # Log Stripe key status (without exposing actual keys)
