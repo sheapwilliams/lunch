@@ -665,6 +665,14 @@ def confirmation():
             flash("No payment found", "warning")
             return redirect(url_for("cart"))
 
+        redirect_status = request.args.get("redirect_status")
+        if redirect_status and redirect_status != "succeeded":
+            app.logger.warning(
+                f"Payment redirect_status={redirect_status} for {payment_intent_id}"
+            )
+            flash("Payment was not completed successfully. Please try again.", "warning")
+            return redirect(url_for("cart"))
+
         # Retrieve the payment intent from Stripe
         app.logger.info(f"Retrieving payment intent {payment_intent_id} from Stripe")
         intent = stripe.PaymentIntent.retrieve(payment_intent_id)
