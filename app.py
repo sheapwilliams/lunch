@@ -641,7 +641,7 @@ def checkout():
             location=LOCATION,
         )
 
-    except stripe.error.StripeError as e:
+    except stripe.StripeError as e:
         app.logger.error(f"Stripe error: {str(e)}")
         flash("Error processing payment. Please try again.", "error")
         return redirect(url_for("cart"))
@@ -748,7 +748,7 @@ def confirmation():
             location=LOCATION,
         )
 
-    except stripe.error.StripeError as e:
+    except stripe.StripeError as e:
         app.logger.error(f"Stripe error during confirmation: {str(e)}")
         # Save the order even if there's a template error
         try:
@@ -827,7 +827,7 @@ def print_confirmation(payment_intent_id):
             location=LOCATION,
         )
 
-    except stripe.error.StripeError as e:
+    except stripe.StripeError as e:
         app.logger.error(f"Stripe error in print confirmation: {str(e)}")
         flash("Error retrieving order details", "error")
         return redirect(url_for("dashboard"))
