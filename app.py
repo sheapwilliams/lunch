@@ -868,14 +868,14 @@ def webhook():
         user_id = metadata.get("user_id")
         cart_json = metadata.get("cart", "{}")
 
+        if not user_id or not cart_json:
+            app.logger.warning(f"Webhook: missing metadata on {payment_intent_id}")
+            return "", 200
+
         try:
             user_id_int = int(user_id)
         except (ValueError, TypeError):
             app.logger.error(f"Webhook: invalid user_id '{user_id}' on {payment_intent_id}")
-            return "", 200
-
-        if not user_id or not cart_json:
-            app.logger.warning(f"Webhook: missing metadata on {payment_intent_id}")
             return "", 200
 
         try:
