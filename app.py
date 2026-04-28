@@ -72,6 +72,7 @@ app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 stripe.api_key = os.environ.get("STRIPE_SECRET_KEY")
 stripe.api_version = "2026-03-25.dahlia"
 STRIPE_PUBLIC_KEY = os.environ.get("STRIPE_PUBLIC_KEY")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
 
 # Log Stripe key status (without exposing actual keys)
 app.logger.info(
@@ -834,6 +835,61 @@ def print_confirmation(payment_intent_id):
         app.logger.error(f"Stripe error in print confirmation: {str(e)}")
         flash("Error retrieving order details", "error")
         return redirect(url_for("dashboard"))
+
+
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    payload = request.get_data()
+    sig_header = request.headers.get("Stripe-Signature")
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, STRIPE_WEBHOOK_SECRET
+        )
+    except stripe.SignatureVerificationError:
+        app.logger.warning("Webhook signature verification failed")
+        return "", 400
+    except Exception as e:
+        app.logger.error(f"Webhook error: {e}")
+        return "", 400
+
+    if event["type"] == "payment_intent.succeeded":
+        intent = event["data"]["object"]
+        payment_intent_id = intent["id"]
+        metadata = intent.get("metadata", {})
+        user_id = metadata.get("user_id")
+        cart_json = metadata.get("cart", "{}")
+
+        if not user_id or not cart_json:
+            app.logger.warning(f"Webhook: missing metadata on {payment_intent_id}")
+            return "", 200
+
+        cart = json.loads(cart_json)
+
+        already_saved = Order.query.filter_by(
+            payment_intent_id=payment_intent_id
+        ).first()
+
+        if not already_saved:
+            for date, meal_name in cart.items():
+                date_obj = datetime.strptime(date, "%Y-%m-%d").date()
+                order = Order(
+                    user_id=int(user_id),
+                    date=date_obj,
+                    meal_name=meal_name,
+                    payment_intent_id=payment_intent_id,
+                )
+                db.session.add(order)
+            db.session.commit()
+            app.logger.info(
+                f"Webhook: saved {len(cart)} order(s) for payment {payment_intent_id}"
+            )
+        else:
+            app.logger.info(
+                f"Webhook: orders already saved for {payment_intent_id}, skipping"
+            )
+
+    return "", 200
 
 
 if __name__ == "__main__":
