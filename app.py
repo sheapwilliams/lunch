@@ -628,7 +628,10 @@ def checkout():
             amount=int(total * 100),  # amount in cents
             currency="usd",
             automatic_payment_methods={"enabled": True},
-            metadata={"cart": json.dumps(cart)},  # Store cart in metadata
+            metadata={
+                "cart": json.dumps(cart),
+                "user_id": str(current_user.id),
+            },
         )
 
         return render_template(

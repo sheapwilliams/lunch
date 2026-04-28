@@ -67,6 +67,35 @@ def test_user(clean_database):
         return user.id
 
 
+@pytest.fixture
+def logged_in_user(client, clean_database):
+    """Create a test user, log them in via the login endpoint, and return an
+    object with .id so tests can reference the user's primary key.
+
+    Because the app uses a server-side cachelib session, this fixture drives a
+    real login request so Flask-Login stores a valid session in the cache.
+    """
+    with flask_app.app_context():
+        user = User(
+            username="checkout_test_user",
+            password_hash=generate_password_hash("password"),
+        )
+        db.session.add(user)
+        db.session.commit()
+        user_id = user.id
+
+    client.post(
+        "/login",
+        data={"username": "checkout_test_user", "password": "password"},
+        follow_redirects=False,
+    )
+
+    class U:
+        id = user_id
+
+    return U()
+
+
 def login(client, username="testuser", password="testpass"):
     return client.post(
         "/login",
