@@ -169,17 +169,6 @@ def load_lunch_options():
         return data["daily_options"]
 
 
-# Routes
-@app.route("/", host="cppnow.info")
-def redirect_to_org():
-    return redirect("https://cppnow.org", code=301)
-
-
-@app.route("/", host="schedule.cppnow.info")
-def redirect_schedule_to_org():
-    return redirect("https://schedule.cppnow.org", code=301)
-
-
 @app.route("/")
 def index():
     if current_user.is_authenticated:
