@@ -6,6 +6,7 @@ packages:
   - curl
   - unzip
   - docker.io
+  - sqlite3
 
 runcmd:
   # Configure Docker to authenticate to Artifact Registry using the instance's
