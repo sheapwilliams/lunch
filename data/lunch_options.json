@@ -1,7 +1,7 @@
 {
     "daily_options": {
         "2025-04-28": {
-            "restaurant": "Mi Chola",
+            "restaurant": "Taco Piña",
             "meals": [
                 {
                     "name": "None",
@@ -10,28 +10,34 @@
                     "price": 0
                 },
                 {
-                    "name": "Harvest Bowl",
+                    "name": "Cheese Enchiladas",
                     "type": "V",
-                    "desc": "Roasted veggies, jalapeno-cilantro rice, black beans, pico de gallo, radish, pickled onions",
-                    "price": 34.00
+                    "desc": "3 corn tortillas stuffed with cheese topped with green salsa, melted chihuahua cheese, lettuce, pico de gallo, and sour cream served with rice & refried beans",
+                    "price": 32.00
                 },
                 {
-                    "name": "Chicken Chile Verde Burrito",
+                    "name": "Shredded Chicken Enchiladas",
                     "type": "C",
-                    "desc": "Cascabel chile, poblano, onions, tomatillo, pico de gallo, crema",
-                    "price": 34.00
+                    "desc": "3 corn tortillas stuffed with shredded chicken topped with green salsa, melted chihuahua cheese, lettuce, pico de gallo, and sour cream served with rice & refried beans",
+                    "price": 32.00
                 },
                 {
-                    "name": "Chimichurri Carne Asada Burrito",
+                    "name": "Ground Beef Burrito",
                     "type": "B",
-                    "desc": "Chimichurri, Refried Beans, French Fries, avocado, mixed cheese, pico de gallo, lettuce",
-                    "price": 37.00
+                    "desc": "Ground beef burrito with cheese, rice and beans inside, sour cream and salsa with mixed greens on the side.",
+                    "price": 24.00
                 },
                 {
-                    "name": "Chimichanga",
+                    "name": "Carnitas Platter",
                     "type": "P",
-                    "desc": "Carnitas, queso fresco, guacamole, crema, pico de gallo, rice + beans on side",
-                    "price": 34.00
+                    "desc": "Slow cooked pork, salsa verde, lettuce, pico de gallo, sour cream, guacamole, pickled jalapeños choice of tortilla with rice & refried beans",
+                    "price": 35.00
+                },
+                {
+                    "name": "Shrimp al Mojo",
+                    "type": "F",
+                    "desc": "Shrimp and mojo de ajo served with rice & mixed greens on the side.",
+                    "price": 35.00
                 }
             ]
         },
