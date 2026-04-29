@@ -32,6 +32,7 @@ fi
 docker run \
     -it --rm \
     --init \
+    --pull always \
     -p 8000:8000 \
     --env-file $ENV_FILE \
     --mount type=volume,source=lunch,target=/data \
