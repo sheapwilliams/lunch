@@ -29,6 +29,8 @@ resource "google_compute_instance" "webserver" {
     email  = google_service_account.lunch.email
     scopes = ["cloud-platform"]
   }
+
+  allow_stopping_for_update = true
 }
 
 resource "google_compute_health_check" "webserver" {

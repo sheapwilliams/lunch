@@ -1,5 +1,5 @@
 resource "google_service_account" "lunch" {
   project      = var.project
-  account_id   = "${var.env}-2025"
+  account_id   = "${var.project}"
   display_name = "${var.env}"
 }
