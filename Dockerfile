@@ -11,6 +11,7 @@ RUN groupadd -r lunch && useradd -r -g lunch -s /bin/bash -d /home/lunch lunch \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
+    gosu \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /app && chown -R lunch:lunch /app /opt
@@ -23,5 +24,10 @@ WORKDIR /app
 RUN uv venv --python=3.13
 COPY --chown=lunch:lunch . .
 
+# Switch back to root so the entrypoint can fix /data ownership before
+# dropping privileges to the lunch user at runtime.
+USER root
+
 EXPOSE 8000
+ENTRYPOINT ["/app/scripts/entrypoint.sh"]
 CMD ["./scripts/configure_data.sh"]
