@@ -1,8 +1,8 @@
 resource "google_compute_instance" "webserver" {
-  name         = var.env
-  project      = var.project
-  zone         = "${var.region}-c"
-  description  = "Web server for lunch"
+  name        = var.env
+  project     = var.project
+  zone        = "${var.region}-c"
+  description = "Web server for lunch"
   # machine_type = "e2-medium"
   machine_type = "e2-standard-2"
   labels       = {}
@@ -10,6 +10,7 @@ resource "google_compute_instance" "webserver" {
   metadata = {
     google-logging-enabled = true
     enable-oslogin         = true
+    enable-osconfig        = true
     user-data              = file("cloud-init.yaml")
   }
 
