@@ -1,26 +1,47 @@
+# Version control
 .git
 .gitignore
+
+# Python artifacts
 __pycache__
 *.pyc
 *.pyo
 *.pyd
 .Python
-env/
-venv/
+.venv
+.python-version
+
+# Environment / secrets — never bake credentials into the image
 .env
-*.log
+.env-prod
+.env-test
+.env.example
+
+# Editor / OS
 .DS_Store
 .idea/
 .vscode/
 *.swp
 *.swo
-instance/
+
+# Local tooling & CI artifacts
+.claude/
 .pytest_cache/
 .coverage
 htmlcov/
-dist/
-build/
-*.egg-info/ 
-live/
+tests/
+
+# Runtime data (created at container startup)
 flask_session/
 instance/
+
+# Not needed to run the app
+archive/
+docs/
+live/
+dist/
+build/
+*.egg-info/
+README.md
+LICENSE
+init_db.py
