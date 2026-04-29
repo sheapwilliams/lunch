@@ -674,7 +674,7 @@ def confirmation():
 
         # Retrieve cart from payment intent metadata
         app.logger.info("Retrieving cart from payment intent metadata")
-        cart = json.loads(intent.metadata.get("cart", "{}"))
+        cart = json.loads(intent.metadata["cart"] if "cart" in intent.metadata else "{}")
         app.logger.debug(f"Cart from metadata: {cart}")
 
         if not cart:
