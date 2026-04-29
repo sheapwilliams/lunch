@@ -12,6 +12,6 @@ provider "google" {
   region  = var.region
 
   default_labels = {
-    owner = "cppnow2025"
+    owner = "cppnow"
   }
 }
