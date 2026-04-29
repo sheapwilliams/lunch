@@ -1,6 +1,6 @@
 variable "project" {
   type    = string
-  default = "lunch-cppnow-25"
+  default = "lunch-cppnow"
 }
 
 variable "region" {

@@ -32,3 +32,5 @@ __pycache__/
 # Terraform local state
 live/**/.terraform/
 live/**/.terraform.tfstate
+live/**/terraform.tfstate
+live/**/terraform.tfstate.backup

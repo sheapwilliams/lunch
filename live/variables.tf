@@ -1,6 +1,6 @@
 variable "project" {
   type    = string
-  default = "lunch-cppnow-25"
+  default = "lunch-cppnow"
 }
 
 variable "region" {
@@ -13,7 +13,8 @@ variable "env" {
   default = "lunch"
 }
 
-variable "dns_zone_name" {
-  type    = string
-  default = "cppnow-info"
+variable "domain" {
+  type        = string
+  description = "Fully-qualified domain name for the app. Must match the external DNS A record."
+  default     = "lunch.cppnow.org"
 }

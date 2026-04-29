@@ -2,7 +2,6 @@
 locals {
   services = [
     "dns.googleapis.com",
-    "domains.googleapis.com",
     "certificatemanager.googleapis.com",
     "cloudresourcemanager.googleapis.com",
     "compute.googleapis.com",
