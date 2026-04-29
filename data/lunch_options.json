@@ -1,6 +1,6 @@
 {
     "daily_options": {
-        "2025-04-28": {
+        "2026-05-04": {
             "restaurant": "Taco Piña",
             "meals": [
                 {
@@ -41,7 +41,7 @@
                 }
             ]
         },
-        "2025-04-29": {
+        "2026-05-05": {
             "restaurant": "CP Burger",
             "meals": [
                 {
@@ -82,7 +82,7 @@
                 }
             ]
         },
-        "2025-04-30": {
+        "2026-05-06": {
             "restaurant": "Phatt Pho N Sushi",
             "meals": [
                 {
@@ -117,7 +117,7 @@
                 }
             ]
         },
-        "2025-05-01": {
+        "2026-05-07": {
             "restaurant": "Silver Peak Grill",
             "meals": [
                 {
@@ -153,7 +153,7 @@
 
             ]
         },
-        "2025-05-02": {
+        "2026-05-08": {
             "restaurant": "Hickory House",
             "meals": [
                 {
