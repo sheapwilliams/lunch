@@ -1,5 +1,7 @@
 #!/bin/bash
 
+IMAGE="us-central1-docker.pkg.dev/lunch-cppnow/lunch/app:latest"
+
 # Parse command line arguments
 while getopts "p" opt; do
   case $opt in
@@ -33,4 +35,4 @@ docker run \
     -p 8000:8000 \
     --env-file $ENV_FILE \
     --mount type=volume,source=lunch,target=/data \
-    lunch:latest
+    $IMAGE
