@@ -20,6 +20,8 @@ resource "google_compute_backend_service" "webserver" {
     balancing_mode = "RATE"
     max_rate       = 100
   }
+
+  security_policy = google_compute_security_policy.webhook_guard.id
 }
 
 
