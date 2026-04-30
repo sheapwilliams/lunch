@@ -178,6 +178,9 @@ def index():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for("dashboard"))
+
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
@@ -186,6 +189,16 @@ def login():
         user = User.query.filter_by(username=username).first()
         if user:
             if check_password_hash(user.password_hash, password):
+                # Clear any session data that may have belonged to a previous
+                # user before establishing the new session. Without this, a
+                # cart or pending_payment_intent left behind by another account
+                # on the same browser would bleed into the new session.
+                # pending_payment_intent is especially important — it would
+                # redirect the incoming user to confirm someone else's order.
+                session.pop("cart", None)
+                session.pop("user_id", None)
+                session.pop("pending_payment_intent", None)
+
                 login_user(user)
 
                 # Check if there's a pending payment to process
