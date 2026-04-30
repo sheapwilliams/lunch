@@ -168,7 +168,7 @@ resource "google_dns_record_set" "a" {
   ttl          = 300
   rrdatas      = local.private_google_access_dns_zones[each.key].ips
 }
-  
+
 resource "google_compute_router" "router" {
   name    = "${var.env}-router"
   project = var.project
