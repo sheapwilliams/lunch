@@ -13,31 +13,31 @@
                     "name": "Cheese Enchiladas",
                     "type": "V",
                     "desc": "3 corn tortillas stuffed with cheese topped with green salsa, melted chihuahua cheese, lettuce, pico de gallo, and sour cream served with rice & refried beans",
-                    "price": 32.00
+                    "price": 35.00
                 },
                 {
                     "name": "Shredded Chicken Enchiladas",
                     "type": "C",
                     "desc": "3 corn tortillas stuffed with shredded chicken topped with green salsa, melted chihuahua cheese, lettuce, pico de gallo, and sour cream served with rice & refried beans",
-                    "price": 32.00
+                    "price": 35.00
                 },
                 {
                     "name": "Ground Beef Burrito",
                     "type": "B",
                     "desc": "Ground beef burrito with cheese, rice and beans inside, sour cream and salsa with mixed greens on the side.",
-                    "price": 24.00
+                    "price": 30.00
                 },
                 {
                     "name": "Carnitas Platter",
                     "type": "P",
                     "desc": "Slow cooked pork, salsa verde, lettuce, pico de gallo, sour cream, guacamole, pickled jalapeños choice of tortilla with rice & refried beans",
-                    "price": 35.00
+                    "price": 40.00
                 },
                 {
                     "name": "Shrimp al Mojo",
                     "type": "F",
                     "desc": "Shrimp and mojo de ajo served with rice & mixed greens on the side.",
-                    "price": 35.00
+                    "price": 40.00
                 }
             ]
         },
@@ -83,77 +83,6 @@
             ]
         },
         "2026-05-06": {
-            "restaurant": "Phatt Pho N Sushi",
-            "meals": [
-                {
-                    "name": "None",
-                    "type": "N",
-                    "desc": "No Lunch Selected",
-                    "price": 0
-                },
-                {
-                    "name": "Bun Ga Xao Sa",
-                    "type": "C",
-                    "desc": "Grilled lemongrass chicken with veggie egg roll",
-                    "price": 31.00
-                },
-                {
-                    "name": "Bun Bo Xao Sa",
-                    "type": "B",
-                    "desc": "Grilled lemongrass beef with veggie egg roll",
-                    "price": 32.00
-                },
-                {
-                    "name": "Bun Husa",
-                    "type": "V",
-                    "desc": "Grilled lemongrass tofu with veggie egg roll",
-                    "price": 28.00
-                },
-                {
-                    "name": "Bun Cha Gio Chay",
-                    "type": "V",
-                    "desc": "Fried vegetarian egg roll",
-                    "price": 27.00
-                }
-            ]
-        },
-        "2026-05-07": {
-            "restaurant": "Silver Peak Grill",
-            "meals": [
-                {
-                    "name": "None",
-                    "type": "N",
-                    "desc": "No Lunch Selected",
-                    "price": 0
-                },
-                {
-                    "name": "Grilled Chicken Tacos",
-                    "type": "C",
-                    "desc": "Grilled Chicken with Tomatillo Salsa, Pico and Fresh Cilantro",
-                    "price": 25.00
-                },
-                {
-                    "name": "Philly Cheese Steak",
-                    "type": "B",
-                    "desc": "Classic hoagie bun, shaved sirloin steak, onions, melted american cheese and spicy mayo",
-                    "price": 24.00
-                },
-                {
-                    "name": "Carne Asada Burrito",
-                    "type": "B",
-                    "desc": "Grilled sirloin steak, tomatillo salsa, pico, french fries, shredded lettuce and guacamole",
-                    "price": 28.00
-                },
-                {
-                    "name": "Fish Tacos",
-                    "type": "F",
-                    "desc": "Grilled wahoo, topped with chipotle lime slaw, chipotle aioli, pico, and fresh cilantro.",
-                    "price": 29.00
-                }
-
-            ]
-        },
-        "2026-05-08": {
             "restaurant": "Hickory House",
             "meals": [
                 {
@@ -169,7 +98,7 @@
                     "price": 28.00
                 },
                 {
-                    "name": "Smoked Beef Brisket",
+                    "name": "Smoked Chopped Beef Brisket",
                     "type": "B",
                     "desc": "Beef brisket, fries, cole slaw and garlic toast",
                     "price": 30.00
@@ -181,16 +110,92 @@
                     "price": 27.00
                 },
                 {
-                    "name": "Grilled Chicken Breast Sandwich",
+                    "name": "Chicken-Fried Chicken Sandwich",
                     "type": "C",
-                    "desc": "8oz chicken breast topped with BBQ sauce, fries and coleslaw",
+                    "desc": "Breaded chicken breast, lettuce, tomato, onion, and pickles. Served with fries and coleslaw.",
                     "price": 30.00
                 },
                 {
-                    "name": "Fish & Chips",
+                    "name": "Fried Catfish Plate",
                     "type": "F",
-                    "desc": "Hand-breaded Alaskan pollock with slaw",
+                    "desc": "Served with fries, coleslaw, and garlic toast",
                     "price": 30.00
+                }
+            ]
+        },
+        "2026-05-07": {
+            "restaurant": "Bangkok Happy Bowl",
+            "meals": [
+                {
+                    "name": "None",
+                    "type": "N",
+                    "desc": "No Lunch Selected",
+                    "price": 0
+                },
+                {
+                    "name": "Bun Ga Xao Sa",
+                    "type": "C",
+                    "desc": "Grilled lemongrass chicken with veggie egg roll",
+                    "price": 32.00
+                },
+                {
+                    "name": "Bun Bo Xao Sa",
+                    "type": "B",
+                    "desc": "Grilled lemongrass beef with veggie egg roll",
+                    "price": 34.00
+                },
+                {
+                    "name": "Bun Husa",
+                    "type": "V",
+                    "desc": "Grilled lemongrass tofu with veggie egg roll",
+                    "price": 30.00
+                },
+                {
+                    "name": "Bun Cha Gio Chay",
+                    "type": "V",
+                    "desc": "Fried vegetarian egg roll",
+                    "price": 29.00
+                }
+            ]
+        },
+        "2026-05-08": {
+            "restaurant": "Silvers Aspen",
+            "meals": [
+                {
+                    "name": "None",
+                    "type": "N",
+                    "desc": "No Lunch Selected",
+                    "price": 0
+                },
+                {
+                    "name": "Pastrami Sandwich",
+                    "type": "B",
+                    "desc": "Swiss cheese, house mustard, dill pickles",
+                    "price": 39.00
+                },
+                {
+                    "name": "Aspen Cheese Steak",
+                    "type": "B",
+                    "desc": "Steak, swiss cheese, special housemade sriracha aioli",
+                    "price": 34.00
+                },
+                {
+                    "name": "Chicken Bahn Mi",
+                    "type": "C",
+                    "desc": "Pulled rotisserie chicken, pickled radish, fresno, cucumbger, carroes, cilantro, chili-garlic aioli",
+                    "price": 28.00
+                },
+                {
+                    "name": "Silver Queen",
+                    "type": "F",
+                    "desc": "Nova premium salmon, caper relish, herbed cream cheese, cucumbers, pickled red oinions, evrything bagel.",
+                    "price": 29.00
+                },
+                {
+                    "name": "Caprese Sandwich",
+                    "type": "V",
+                    "desc": "heirloom tomatoes, fresh mozarella, fresh basil, balsamic glaze, pesto genevese.",
+                    "price": 26.00
                 }
             ]
         }
