@@ -866,9 +866,9 @@ def webhook():
     if event["type"] == "payment_intent.succeeded":
         intent = event["data"]["object"]
         payment_intent_id = intent["id"]
-        metadata = intent.get("metadata", {})
-        user_id = metadata.get("user_id")
-        cart_json = metadata.get("cart", "{}")
+        metadata = intent["metadata"] if "metadata" in intent else {}
+        user_id = metadata["user_id"] if "user_id" in metadata else None
+        cart_json = metadata["cart"] if "cart" in metadata else "{}"
 
         if not user_id or not cart_json:
             app.logger.warning(f"Webhook: missing metadata on {payment_intent_id}")
